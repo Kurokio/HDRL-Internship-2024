@@ -1,11 +1,12 @@
 def SPASE_Scraper(path):
     """Takes path of a .xml SPASE record file and returns a tuple of values of varying types which hold all 
-    desired metadata. This will collect the desired metadata following the priority rules determined by SPASE 
-    record experts. If any desired metadata is not found, the default value assigned is NULL.
+    desired metadata and the fields they came from. This will collect the desired metadata following the 
+    priority rules determined  by SPASE record experts. If any desired metadata is not found, the default 
+    value assigned is an empty string.
     
     :param path: A string of the absolute/relative path of the SPASE record to be scraped.
     :type path: String
-    :return: A tuple containing the metadata desired.
+    :return: A tuple containing the metadata desired and where they were obtained.
     :rtype: tuple
     """
     
@@ -18,7 +19,7 @@ def SPASE_Scraper(path):
         file_size_bytes = os.path.getsize(path)
         file_size = file_size_bytes/(1024*1024*1024)
         print(f"File size is: {file_size:.2f} GB")
-        # root[1] = NumericalData
+        # root[1] = NumericalData or DisplayData
         # root = Spase
         tree = ET.parse(path)
         root = tree.getroot()
@@ -29,18 +30,34 @@ def SPASE_Scraper(path):
     # iterate thru NumericalData/DisplayData to obtain ResourceID and locate ResourceHeader
     for child in root[1]:
         if child.tag.endswith("ResourceID"):
+            # collect ResourceID
             RID = child.text
+            # use partition to get just the NumericalData or DisplayData text
+            before, sep, after = root[1].tag.partition("}")
+            parent, sep, after = after.partition("'")
+            # record field where RID was collected
+            RIDField = (parent + "/ResourceID")
         elif child.tag.endswith("ResourceHeader"):
             targetChild = child
 
     # obtain Author, Publication Date, Publisher, Persistent Identifier, and Dataset Name
 
     # define vars
-    author="" 
-    pubDate=""
+    author= []
+    authorField = ""
+    pubDate= ""
+    pubDateField = (parent + "/PublicationInfo/PublicationDate")
     pub = ""
+    pubField = ""
     dataset = ""
+    datasetField = ""
     PI = ""
+    PIField = (parent+ "/DOI")
+    licenseField = (parent + "/AccessInformation/AccessRights")
+    datalinkField = (parent + "/AccessInformation/AccessURL/URL")
+    PI_Child = None
+    priority = False
+    
     # holds role values that are not considered for author var
     UnapprovedAuthors = ["MetadataContact", "ArchiveSpecialist", "HostContact", "Publisher", "User"]
 
@@ -50,6 +67,8 @@ def SPASE_Scraper(path):
         if child.tag.endswith("ResourceName"):
             targetChild = child
             dataset = child.text
+            # record field where dataset was collected
+            datasetField = (parent + "/ResourceHeader/ResourceName")
         # find Persistent Identifier
         elif child.tag.endswith("DOI"):
             PI = child.text
@@ -69,24 +88,44 @@ def SPASE_Scraper(path):
                 elif child.tag.endswith("Role"):
                     # backup author
                     if child.text == ("PrincipalInvestigator" or "PI"):
-                        author = PID
+                        author.append(PID)
+                        # record field where author was collected
+                        authorField = (parent + "/ResourceHeader/Contact/PersonID")
+                        # mark that highest priority backup author was found
+                        priority = True
                     # backup publisher
                     elif child.text == "Publisher":
                         pub = child.text
+                        # record field where publisher was collected
+                        pubField = (parent + "/ResourceHeader/Contact/PersonID")
                     # backup author
                     elif child.text not in UnapprovedAuthors:
-                        author = PID
+                        # checks if higher priority author (PI) was added first
+                        if not priority:
+                            author.append(PID)
+                            # record field where author was collected
+                            authorField = (parent + "/ResourceHeader/Contact/PersonID")
 
     # access Publication Info
-    for child in PI_Child:
-        if child.tag.endswith("Authors"):
-            author = child.text
-        elif child.tag.endswith("PublicationDate"):
-            pubDate = child.text
-        elif child.tag.endswith("PublishedBy"):
-            pub = child.text
-        elif child.tag.endswith("Title"):
-            dataset = child.text
+    if PI_Child is not None:
+        for child in PI_Child:
+            # collect preferred author
+            if child.tag.endswith("Authors"):
+                author = [child.text]
+                # record field where author was collected
+                authorField = (parent + "/PublicationInfo/Authors")
+            elif child.tag.endswith("PublicationDate"):
+                pubDate = child.text
+            # collect preferred publisher
+            elif child.tag.endswith("PublishedBy"):
+                pub = child.text
+                # record field where pub was collected
+                pubField = (parent + "/PublicationInfo/PublishedBy")
+            # collect preferred dataset
+            elif child.tag.endswith("Title"):
+                dataset = child.text
+                # record field where dataset was collected
+                datasetField = (parent + "/PublicationInfo/Title")
     
     
     # obtain data links and license
@@ -113,7 +152,7 @@ def SPASE_Scraper(path):
                             # check if url is one for consideration
                             if ("nasa.gov" or "virtualsolar.org") in child.text:
                                 url = child.text
-                                # provide "NULL" value if no keys are found
+                                # provide "NULL" value in case no keys are found
                                 if access == "Open":
                                     AccessRights["Open"][url] = []
                                 elif access == "PartiallyRestricted":
@@ -148,12 +187,13 @@ def SPASE_Scraper(path):
                         # use partition to split text by Repository/ and assign only the text after it to pub 
                         before, sep, after = child.text.partition("Repository/")
                         pub = after
+                        # record field where publisher was collected
+                        pubField = (parent + "/AccessInformation/RepositoryID")
                 # continue to check for additional AccessURLs            
                 continue
         # continue to check for additional Access Informations
         continue
-        
-    #pubYear = pubDate[0:4]
-    
+           
     # return stmt
-    return RID, author, pub, pubDate, dataset, PI, AccessRights
+    return (RID, RIDField, author, authorField, pub, pubField, pubDate, pubDateField, dataset, datasetField, PI, 
+            PIField, AccessRights, licenseField, datalinkField)
