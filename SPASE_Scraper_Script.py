@@ -1,7 +1,7 @@
 def SPASE_Scraper(path):
     """Takes path of a .xml SPASE record file and returns a tuple of values of varying types which hold all 
     desired metadata and the fields they came from. This will collect the desired metadata following the 
-    priority rules determined  by SPASE record experts. If any desired metadata is not found, the default 
+    priority rules determined by SPASE record experts. If any desired metadata is not found, the default 
     value assigned is an empty string.
     
     :param path: A string of the absolute/relative path of the SPASE record to be scraped.
@@ -14,11 +14,12 @@ def SPASE_Scraper(path):
     import os
     
     # establish path of XML file
-    print("You entered " + path)
+    print("Scraping " + path)
     if os.path.isfile(path) and path.endswith(".xml"):
         file_size_bytes = os.path.getsize(path)
         file_size = file_size_bytes/(1024*1024*1024)
-        print(f"File size is: {file_size:.2f} GB")
+        if file_size >= 0.5:
+            print(f"File size is: {file_size:.2f} GB")
         # root[1] = NumericalData or DisplayData
         # root = Spase
         tree = ET.parse(path)
@@ -51,6 +52,8 @@ def SPASE_Scraper(path):
     pubField = ""
     dataset = ""
     datasetField = ""
+    desc = ""
+    descField = (parent + "/ResourceHeader/Description")
     PI = ""
     PIField = (parent+ "/DOI")
     licenseField = (parent + "/AccessInformation/AccessRights")
@@ -69,6 +72,9 @@ def SPASE_Scraper(path):
             dataset = child.text
             # record field where dataset was collected
             datasetField = (parent + "/ResourceHeader/ResourceName")
+        # find Description
+        elif child.tag.endswith("Description"):
+            desc = child.text
         # find Persistent Identifier
         elif child.tag.endswith("DOI"):
             PI = child.text
@@ -195,5 +201,5 @@ def SPASE_Scraper(path):
         continue
            
     # return stmt
-    return (RID, RIDField, author, authorField, pub, pubField, pubDate, pubDateField, dataset, datasetField, PI, 
-            PIField, AccessRights, licenseField, datalinkField)
+    return (RID, RIDField, author, authorField, pub, pubField, pubDate, pubDateField, dataset, datasetField, 
+            desc, descField, PI, PIField, AccessRights, licenseField, datalinkField)
