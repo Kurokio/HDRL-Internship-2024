@@ -46,6 +46,7 @@ def SPASE_Scraper(path):
     # define vars
     author= []
     authorField = ""
+    authorRole= ""
     pubDate= ""
     pubDateField = (parent + "/PublicationInfo/PublicationDate")
     pub = ""
@@ -156,17 +157,17 @@ def SPASE_Scraper(path):
                     for child in targetChild:
                         if child.tag.endswith("URL"):
                             # check if url is one for consideration
-                            if ("nasa.gov" or "virtualsolar.org") in child.text:
-                                url = child.text
-                                # provide "NULL" value in case no keys are found
-                                if access == "Open":
-                                    AccessRights["Open"][url] = []
-                                elif access == "PartiallyRestricted":
-                                    AccessRights["PartiallyRestricted"][url] = []
-                                else:
-                                    AccessRights["Restricted"][url] = []
+                            #if ("nasa.gov" or "virtualsolar.org") in child.text:
+                            url = child.text
+                            # provide "NULL" value in case no keys are found
+                            if access == "Open":
+                                AccessRights["Open"][url] = []
+                            elif access == "PartiallyRestricted":
+                                AccessRights["PartiallyRestricted"][url] = []
                             else:
-                                break
+                                AccessRights["Restricted"][url] = []
+                            #else:
+                                #break
                         # check if URL has a product key
                         elif child.tag.endswith("ProductKey"):
                             prodKey = child.text
