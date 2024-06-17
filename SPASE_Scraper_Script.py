@@ -44,21 +44,22 @@ def SPASE_Scraper(path):
     # obtain Author, Publication Date, Publisher, Persistent Identifier, and Dataset Name
 
     # define vars
+    access = ""
     author= []
     authorField = ""
-    authorRole= ""
+    authorRole= []
     pubDate= ""
-    pubDateField = (parent + "/PublicationInfo/PublicationDate")
+    pubDateField = ""
     pub = ""
     pubField = ""
     dataset = ""
     datasetField = ""
     desc = ""
-    descField = (parent + "/ResourceHeader/Description")
+    descField = ""
     PI = ""
-    PIField = (parent+ "/DOI")
-    licenseField = (parent + "/AccessInformation/AccessRights")
-    datalinkField = (parent + "/AccessInformation/AccessURL/URL")
+    PIField = ""
+    licenseField = ""
+    datalinkField = ""
     PI_Child = None
     priority = False
     
@@ -76,9 +77,11 @@ def SPASE_Scraper(path):
         # find Description
         elif child.tag.endswith("Description"):
             desc = child.text
+            descField = (parent + "/ResourceHeader/Description")
         # find Persistent Identifier
         elif child.tag.endswith("DOI"):
             PI = child.text
+            PIField = (parent+ "/DOI")
         # find Publication Info
         elif child.tag.endswith("PublicationInfo"):
             PI_Child = child
@@ -94,8 +97,14 @@ def SPASE_Scraper(path):
                 # find Role
                 elif child.tag.endswith("Role"):
                     # backup author
-                    if child.text == ("PrincipalInvestigator" or "PI"):
-                        author.append(PID)
+                    if ("PrincipalInvestigator" or "PI") in child.text:
+                        # if a lesser priority author found first, overwrite author lists
+                        if not priority and author:
+                            author = [PID]
+                            authorRole = [child.text]
+                        else:
+                            author.append(PID)
+                            authorRole.append(child.text)
                         # record field where author was collected
                         authorField = (parent + "/ResourceHeader/Contact/PersonID")
                         # mark that highest priority backup author was found
@@ -110,6 +119,7 @@ def SPASE_Scraper(path):
                         # checks if higher priority author (PI) was added first
                         if not priority:
                             author.append(PID)
+                            authorRole.append(child.text)
                             # record field where author was collected
                             authorField = (parent + "/ResourceHeader/Contact/PersonID")
 
@@ -121,8 +131,10 @@ def SPASE_Scraper(path):
                 author = [child.text]
                 # record field where author was collected
                 authorField = (parent + "/PublicationInfo/Authors")
+                authorRole = []
             elif child.tag.endswith("PublicationDate"):
                 pubDate = child.text
+                pubDateField = (parent + "/PublicationInfo/PublicationDate")
             # collect preferred publisher
             elif child.tag.endswith("PublishedBy"):
                 pub = child.text
@@ -151,6 +163,7 @@ def SPASE_Scraper(path):
             for child in targetChild:
                 if child.tag.endswith("AccessRights"):
                     access = child.text
+                    licenseField = (parent + "/AccessInformation/AccessRights")
                 elif child.tag.endswith("AccessURL"):
                     targetChild = child
                     # iterate thru children to locate URL
@@ -159,6 +172,7 @@ def SPASE_Scraper(path):
                             # check if url is one for consideration
                             #if ("nasa.gov" or "virtualsolar.org") in child.text:
                             url = child.text
+                            datalinkField = (parent + "/AccessInformation/AccessURL/URL")
                             # provide "NULL" value in case no keys are found
                             if access == "Open":
                                 AccessRights["Open"][url] = []
@@ -202,5 +216,5 @@ def SPASE_Scraper(path):
         continue
            
     # return stmt
-    return (RID, RIDField, author, authorField, pub, pubField, pubDate, pubDateField, dataset, datasetField, 
+    return (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, dataset, datasetField, 
             desc, descField, PI, PIField, AccessRights, licenseField, datalinkField)
