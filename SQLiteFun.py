@@ -88,3 +88,29 @@ def add_Records(conn, entry):
     cur.execute(sql, entry)
     conn.commit()
     return cur.lastrowid
+
+# executes given SQLite statement
+def execution(stmt):
+    try:
+        with sqlite3.connect("SPASE_Data.db") as conn:
+            cur = conn.cursor()
+            #print(stmt)
+            cur.execute(stmt)
+            rows = cur.fetchall()
+    except sqlite3.Error as e:
+        print(e)
+    return rows
+
+# How many records published by SDAC in X year?
+def SDAC_records(yr):
+    try:
+        with sqlite3.connect("SPASE_Data.db") as conn:
+            cur = conn.cursor()
+            cur.execute("""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                            WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
+                            "%Solar Data Analysis Center") AND publicationYr=?""", (yr,))
+            rows = cur.fetchall()
+            for row in rows:
+                print("There are " + str(row[0]) + " records published by SDAC in the year " + yr)
+    except sqlite3.Error as e:
+        print(e)
