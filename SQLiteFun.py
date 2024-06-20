@@ -99,7 +99,7 @@ def execution(stmt):
             rows = cur.fetchall()
     except sqlite3.Error as e:
         print(e)
-    return rows
+    return [row[0] for row in rows]
 
 # How many records published by SDAC in X year?
 def SDAC_records(yr):
