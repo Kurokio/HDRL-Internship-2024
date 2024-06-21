@@ -1,23 +1,69 @@
+""" Function List:
+CountRemover(stmt, nested): Converts a COUNT SQLite statement into a SELECT SQLite statement
+FormatPrint(self, statement, criteria): Prints result of SQLite statement with context in an
+                                        easily understandable format
+allRecords: Executes FormatPrint function for all records in table
+SDAC_Records: Executes FormatPrint function for records that are published by SDAC
+SPDF_Records: Executes FormatPrint function for records that are published by SPDF
+"""
+
+"""If additional tests were requested, simply create more string variables which contain the
+SQLite queries to be executed and pass them to the correct FormatPrint method depending on
+whether you want the links or counts returned. Make sure the query is structured correctly
+(if you want links do not include COUNT, if you want the number of records matching a certain
+criteria then do include the COUNT). Remember you can always use the CountRemover function to
+convert any COUNT query into a generic SELECT query that returns the links."""
+
 import sqlite3
 from SQLiteFun import execution
 
 def CountRemover(stmt, nested):
-        # if nested = 0 (stmt not a nested query)
-        before, sep, after = stmt.partition("COUNT(")
-        b4, sep, after = after.partition(")")
-        cleanStmt = before + b4 + after
-        # add ending parentheses if stmt will be in a nested query (nested=1)
-        if nested:
-            before, sep, after = cleanStmt.partition(";")
-            cleanStmt = before + ")" + sep + after
-        return cleanStmt
+    """Takes SQLite COUNT query to change into a generic SELECT query instead. Also takes an argument to determine
+    whether or not to add an extra closing parentheses depending on if the query is nested as a subquery. Pass 1
+    to nested if query is a subquery, and pass 0 to it if the query is not a subquery.
+    
+    :param stmt: A string of the SQLite COUNT query to be changed.
+    :type stmt: String
+    :param nested: A number signifying whether or not the query is a subquery.
+    :type nested: int
+    :return: A string that no longer has the COUNT function.
+    :rtype: String
+    """
+    
+    # if nested = 0 (stmt not a nested query), just remove the COUNT
+    before, sep, after = stmt.partition("COUNT(")
+    b4, sep, after = after.partition(")")
+    cleanStmt = before + b4 + after
+    # add ending parentheses if stmt will be in a nested query (nested=1)
+    if nested:
+        before, sep, after = cleanStmt.partition(";")
+        cleanStmt = before + ")" + sep + after
+    return cleanStmt
 
 class Counts(object):
-    @classmethod
-    def FormatPrint(stmt, criteria):
-        rows = execution(stmt)
-        print("There are " + str(rows[0]) + "records " + criteria)
+    """Creates the SQLite statements that answer the analysis questions from the Intern Doc. Publisher specific
+    statements, such as for SPDF and SDAC, are created by joining two queries using SQLite's INTERSECT. This class
+    also houses several functions which then print the results from these queries in a proper format. The printing
+    is split into 3 categories: all records, SDAC records, and SPDF records. The results are the COUNTS of
+    the records that match the criteria given by the SQLite statements. This is the parent class of Links."""
     
+    # print method for counts that prints the number of records matching criteria
+    @classmethod
+    def FormatPrint(self, stmt, criteria):
+        """Prints the results for a given statement in their correct format. In this case, the
+        results are counts, so it prints the count of the records that match the statement given.
+        Following this, the criteria argument is appended, making a sentence which gives further 
+        context to the user of which analysis question is being answered.
+
+        :param stmt: A string of the SQLite statement that is executed
+        :type stmt: String
+        :param criteria: A string explaining what the resulting number is for.
+        :type criteria: String
+        """
+        rows = execution(stmt)
+        print("There are " + str(rows[0]) + " records " + criteria)
+    
+    # query stmts that answer analysis questions
     totalStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries;"""
     authorStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE author NOT LIKE "" ;"""
     pubStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE publisher NOT LIKE "" ;"""
@@ -30,61 +76,46 @@ class Counts(object):
 
     PIStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE PI NOT LIKE "" ;"""
     descStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE description NOT LIKE "" ;"""
-    citationStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                    WHERE author NOT LIKE ""
+    has_citation = """author NOT LIKE ""
                     AND dataset NOT LIKE ""
                     AND publicationYr NOT LIKE ""
-                    AND publisher NOT LIKE "";"""
-    complianceStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                    WHERE description NOT LIKE ""
+                    AND publisher NOT LIKE "" """
+    citationStmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE {has_citation};"""
+    has_compliance = """ description NOT LIKE ""
                     AND dataset NOT LIKE ""
-                    AND PI NOT LIKE "";"""
+                    AND PI NOT LIKE "" """
+    complianceStmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE {has_compliance};"""
 
     # edit once get data link checker to include working data links as a check
-    AL1Stmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                    WHERE (author NOT LIKE ""
-                    AND dataset NOT LIKE ""
-                    AND publicationYr NOT LIKE ""
-                    AND publisher NOT LIKE "")
-                    OR (description NOT LIKE ""
-                    AND dataset NOT LIKE ""
-                    AND PI NOT LIKE "")
+    
+    # at least one field
+    AL1Stmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE {has_citation}
+                    OR {has_compliance}
                     OR PI NOT LIKE ""
                     OR license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%";"""
 
-    AL2Stmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                    WHERE ((author NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND publicationYr NOT LIKE ""
-                        AND publisher NOT LIKE "")
+    # at least 2 fields
+    AL2Stmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE ({has_citation}
                     AND
-                        (description NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND PI NOT LIKE "")) 
+                        {has_compliance}) 
                     OR
-                        ((author NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND publicationYr NOT LIKE ""
-                        AND publisher NOT LIKE "")
+                        ({has_citation}
                     AND
                         PI NOT LIKE "")
                     OR
-                        ((author NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND publicationYr NOT LIKE ""
-                        AND publisher NOT LIKE "")
+                        ({has_citation}
                     AND
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%")
                     OR
-                        ((description NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND PI NOT LIKE "")
+                        ({has_compliance}
                     AND
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%")
                     OR
-                        ((description NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND PI NOT LIKE "")
+                        ({has_compliance}
                     AND 
                         PI NOT LIKE "")
                     OR  
@@ -92,64 +123,48 @@ class Counts(object):
                     AND
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%");"""
 
-    AL3Stmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                    WHERE ((author NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND publicationYr NOT LIKE ""
-                        AND publisher NOT LIKE "")
+    # at least 3 fields
+    AL3Stmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE ({has_citation}
                     AND
-                        (description NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND PI NOT LIKE "")
+                        {has_compliance}
                     AND
                         PI NOT LIKE "")
                     OR
-                        ((author NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND publicationYr NOT LIKE ""
-                        AND publisher NOT LIKE "")
+                        ({has_citation}
                     AND
                         PI NOT LIKE ""
                     AND
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%")
                     OR
-                        ((author NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND publicationYr NOT LIKE ""
-                        AND publisher NOT LIKE "")
+                        ({has_citation}
                     AND
-                        (description NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND PI NOT LIKE "")
+                        {has_compliance}
                     AND
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%")
                     OR
-                        ((description NOT LIKE ""
-                        AND dataset NOT LIKE ""
-                        AND PI NOT LIKE "")
+                        ({has_compliance}
                     AND
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%"
                     AND 
                         PI NOT LIKE "");"""
 
     # not actually all but all at this moment
-    allStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                    WHERE (author NOT LIKE ""
-                    AND dataset NOT LIKE ""
-                    AND publicationYr NOT LIKE ""
-                    AND publisher NOT LIKE "")
-                    AND (description NOT LIKE ""
-                    AND dataset NOT LIKE ""
-                    AND PI NOT LIKE "")
+    allStmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE {has_citation}
+                    AND {has_compliance}
                     AND PI NOT LIKE ""
                     AND license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%";"""
-    # test for above queries with specified publisher
+    
+    # all records with specified publisher
     SDACStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
                         WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
                                 "%Solar Data Analysis Center")"""
     SPDFStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
                         WHERE (publisher LIKE "%SPDF" OR publisher LIKE 
                                 "%Space Physics Data Facility")"""
+    
+    # intersect stmts match previous queries with results that only have SPDF or SDAC as publisher
     SDACIntersect = """SELECT COUNT(DISTINCT SPASE_id) FROM (
                         SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
@@ -184,7 +199,6 @@ class Counts(object):
     SDACcomplianceStmt = SDACIntersect + CountRemover(complianceStmt,1)
     SPDFcomplianceStmt = SPDFIntersect + CountRemover(complianceStmt,1)
 
-
     SDAC_AL1 = SDACIntersect + CountRemover(AL1Stmt,1)
     SPDF_AL1 = SPDFIntersect + CountRemover(AL1Stmt,1)
     SDAC_AL2 = SDACIntersect + CountRemover(AL2Stmt,1)
@@ -193,156 +207,96 @@ class Counts(object):
     SPDF_AL3 = SPDFIntersect + CountRemover(AL3Stmt,1)
 
     def allRecords(self):
+        """Executes the FormatPrint function for all SQLite statements that do not have a
+        specified publisher."""
+        
         # prints counts for all records
-        FormatPrint(self.totalStmt, "total")
-
-        rows = execution(self.authorStmt)
-        print("There are " + str(rows[0]) + " records with at least one author")
-
-        rows = execution(self.pubStmt)
-        print("There are " + str(rows[0]) + " records with a publisher")
-
-        rows = execution(self.pubYrStmt)
-        print("There are " + str(rows[0]) + " records with a publication year")
-
-        rows = execution(self.datasetStmt)
-        print("There are " + str(rows[0]) + " records with a dataset")
-
-        rows = execution(self.licenseStmt)
-        print("There are " + str(rows[0]) + " records with a license")
-
-        rows = execution(self.urlStmt)
-        print("There are " + str(rows[0]) + " records with a url")
-
-        rows = execution(self.NASAurlStmt)
-        print("There are " + str(rows[0]) + " records with a NASA url")
-
-        rows = execution(self.PIStmt)
-        print("There are " + str(rows[0]) + " records with a persistent identifier")
-
-        rows = execution(self.descStmt)
-        print("There are " + str(rows[0]) + " records with a description")
-
-        rows = execution(self.citationStmt)
-        print("There are " + str(rows[0]) + " records with citation info")
-
-        rows = execution(self.complianceStmt)
-        print("There are " + str(rows[0]) + " records that meet DCAT-US3 compliance")
-
-        rows = execution(self.AL1Stmt)
-        print("There are " + str(rows[0]) + " records that have at least one desired field")
-
-        rows = execution(self.AL2Stmt)
-        print("There are " + str(rows[0]) + " records that have at least two desired fields")
-
-        rows = execution(self.AL3Stmt)
-        print("There are " + str(rows[0]) + " records that have at least three desired fields")
-
-        rows = execution(self.allStmt)
-        print("There are " + str(rows[0]) + " records that have all desired fields")
+        self.FormatPrint(self.totalStmt, "total")
+        self.FormatPrint(self.authorStmt, "with at least one author")
+        self.FormatPrint(self.pubStmt, "with a publisher")
+        self.FormatPrint(self.pubYrStmt, "with a publication year")
+        self.FormatPrint(self.datasetStmt, "with a dataset")
+        self.FormatPrint(self.licenseStmt, "with a license")
+        self.FormatPrint(self.urlStmt, "with a url")
+        self.FormatPrint(self.NASAurlStmt, "with a NASA url")
+        self.FormatPrint(self.PIStmt, "with a persistent identifier")
+        self.FormatPrint(self.descStmt, "with a description")
+        self.FormatPrint(self.citationStmt, "with citation info")
+        self.FormatPrint(self.complianceStmt, "that meet DCAT-US3 compliance")
+        self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
+        self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
+        self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
+        self.FormatPrint(self.allStmt, "that have all desired fields")
 
     def SDAC_Records(self):
-        # prints counts for SDAC records only    
-        rows = execution(self.SDACStmt)
-        print("There are " + str(rows[0]) + " records published by SDAC")
-
-        rows = execution(self.SDACauthor)
-            #print(row) in case need links
-        print("There are " + str(rows[0]) + " records with at least one author published by SDAC")
-
-        rows = execution(self.SDACpubStmt)
-        print("There are " + str(rows[0]) + " records with a publisher published by SDAC")
-
-        rows = execution(self.SDACpubYrStmt)
-        print("There are " + str(rows[0]) + " records with a publication year published by SDAC")
+        """Executes the FormatPrint function for all SQLite statements with the
+        specified publisher, SDAC."""
         
-        rows = execution(self.SDACdatasetStmt)
-        print("There are " + str(rows[0]) + " records with a dataset published by SDAC")
-
-        rows = execution(self.SDAClicenseStmt)
-        print("There are " + str(rows[0]) + " records with a license published by SDAC")
-
-        rows = execution(self.SDACurlStmt)
-        print("There are " + str(rows[0]) + " records with a url published by SDAC")
-
-        rows = execution(self.SDACNASAurlStmt)
-        print("There are " + str(rows[0]) + " records with a NASA url published by SDAC")
-
-        rows = execution(self.SDACPIStmt)
-        print("There are " + str(rows[0]) + " records with a persistent identifier published by SDAC")
-
-        rows = execution(self.SDACdescStmt)
-        print("There are " + str(rows[0]) + " records with a description published by SDAC")
-
-        rows = execution(self.SDACcitationStmt)
-        print("There are " + str(rows[0]) + " records with citation info published by SDAC")
-
-        rows = execution(self.SDACcomplianceStmt)
-        print("There are " + str(rows[0]) + " records that meet DCAT-US3 compliance published by SDAC")
-
-        rows = execution(self.SDAC_AL1)
-        print("There are " + str(rows[0]) + " records with at least one desired field published by SDAC")
-
-        rows = execution(self.SDAC_AL2)
-        print("There are " + str(rows[0]) + " records with at least two desired fields published by SDAC")
-
-        rows = execution(self.SDAC_AL3)
-        print("There are " + str(rows[0]) + " records with at least three desired fields published by SDAC")
+        # prints counts for SDAC records only    
+        self.FormatPrint(self.SDACStmt, "published by SDAC")
+        self.FormatPrint(self.SDACauthor, "with at least one author published by SDAC")
+        self.FormatPrint(self.SDACpubStmt, "with a publisher published by SDAC")
+        self.FormatPrint(self.SDACpubYrStmt, "with a publication year published by SDAC")
+        self.FormatPrint(self.SDACdatasetStmt, "with a dataset published by SDAC")
+        self.FormatPrint(self.SDAClicenseStmt, "with a license published by SDAC")
+        self.FormatPrint(self.SDACurlStmt, "with a url published by SDAC")
+        self.FormatPrint(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
+        self.FormatPrint(self.SDACPIStmt, "with a persistent identifier published by SDAC")
+        self.FormatPrint(self.SDACdescStmt, "with a description published by SDAC")
+        self.FormatPrint(self.SDACcitationStmt, "with citation info published by SDAC")
+        self.FormatPrint(self.SDACcomplianceStmt, "that meet DCAT-US3 compliance published by SDAC")
+        self.FormatPrint(self.SDAC_AL1, "with at least one desired field published by SDAC")
+        self.FormatPrint(self.SDAC_AL2, "with at least two desired fields published by SDAC")
+        self.FormatPrint(self.SDAC_AL3, "with at least three desired fields published by SDAC")
 
     def SPDF_Records(self):
+        """Executes the FormatPrint function for all SQLite statements with the
+        specified publisher, SPDF."""
+        
         # prints counts of SPDF records only
-        rows = execution(self.SPDFStmt)
-        print("There are " + str(rows[0]) + " records published by SPDF")
-
-        rows = execution(self.SPDFauthor)
-        print("There are " + str(rows[0]) + " records with at least one author published by SPDF")
-
-        rows = execution(self.SPDFpubStmt)
-        print("There are " + str(rows[0]) + " records with a publisher published by SPDF")
-
-        rows = execution(self.SPDFpubYrStmt)
-        print("There are " + str(rows[0]) + " records with a publication year published by SPDF")
-
-        rows = execution(self.SPDFdatasetStmt)
-        print("There are " + str(rows[0]) + " records with a dataset published by SPDF")
-
-        rows = execution(self.SPDFlicenseStmt)
-        print("There are " + str(rows[0]) + " records with a license published by SPDF")
-
-        rows = execution(self.SPDFurlStmt)
-        print("There are " + str(rows[0]) + " records with a url published by SPDF")
-
-        rows = execution(self.SPDFNASAurlStmt)
-        print("There are " + str(rows[0]) + " records with a NASA url published by SPDF")
-
-        rows = execution(self.SPDFPIStmt)
-        print("There are " + str(rows[0]) + " records with a persistent identifier published by SPDF")
-
-        rows = execution(self.SPDFdescStmt)
-        print("There are " + str(rows[0]) + " records with a description published by SPDF")
-
-        rows = execution(self.SPDFcitationStmt)
-        print("There are " + str(rows[0]) + " records with citation info published by SPDF")
-
-        rows = execution(self.SPDFcomplianceStmt)
-        print("There are " + str(rows[0]) + " records that meet DCAT-US3 compliance published by SPDF")
-
-        rows = execution(self.SPDF_AL1)
-        print("There are " + str(rows[0]) + " records with at least one desired field published by SPDF")
-
-        rows = execution(self.SPDF_AL2)
-        print("There are " + str(rows[0]) + " records with at least two desired fields published by SPDF")
-
-        rows = execution(self.SPDF_AL3)
-        print("There are " + str(rows[0]) + " records with at least three desired fields published by SPDF")
+        self.FormatPrint(self.SPDFStmt, "published by SPDF")
+        self.FormatPrint(self.SPDFauthor, "with at least one author published by SPDF")
+        self.FormatPrint(self.SPDFpubStmt, "with a publisher published by SPDF")
+        self.FormatPrint(self.SPDFpubYrStmt, "with a publication year published by SPDF")
+        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset published by SPDF")
+        self.FormatPrint(self.SPDFlicenseStmt, "with a license published by SPDF")
+        self.FormatPrint(self.SPDFurlStmt, "with a url published by SPDF")
+        self.FormatPrint(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
+        self.FormatPrint(self.SPDFPIStmt, "with a persistent identifier published by SPDF")
+        self.FormatPrint(self.SPDFdescStmt, "with a description published by SPDF")
+        self.FormatPrint(self.SPDFcitationStmt, "with citation info published by SPDF")
+        self.FormatPrint(self.SPDFcomplianceStmt, "that meet DCAT-US3 compliance published by SPDF")
+        self.FormatPrint(self.SPDF_AL1, "with at least one desired field published by SPDF")
+        self.FormatPrint(self.SPDF_AL2, "with at least two desired fields published by SPDF")
+        self.FormatPrint(self.SPDF_AL3, "with at least three desired fields published by SPDF")
             
 class Links(Counts):
-    def FormatPrint(stmt, criteria):
+    """A subclass of the Counts class. Creates the SQLite statements that answer the analysis questions 
+    from the Intern Doc. These statements are created by using the local CountRemover function on the 
+    previously defined statements in the parent class, Counts. Publisher specific statements, such as 
+    for SPDF and SDAC, are created by joining two queries using SQLite's INTERSECT. This class also houses 
+    several functions which then print the results from these queries in a proper format. The printing is 
+    split into 3 categories: all records, SDAC records, and SPDF records. The results are the SPASE_id's of
+    the records that match the criteria given by the SQLite statements."""
+    
+    # print method for links that prints the first 10 links matching criteria given
+    @classmethod
+    def FormatPrint(self, stmt, criteria):
+        """Prints the results for a given statement in their correct format. The first thing printed 
+        is a sentence using the criteria argument, which gives context to the user of which analysis 
+        question is being answered. In this case, the results are SPASE_id's, so it prints the 
+        SPASE_id's of the records that match the statement given.
+
+        :param stmt: A string of the SQLite statement that is executed
+        :type stmt: String
+        :param criteria: A string explaining what the resulting number is for.
+        :type criteria: String
+        """
         rows = execution(stmt)
         print("The records " + criteria + " are:")
         print(rows[:10])
     
-    # can pass any stmt to CountRemover to return records instead of counts of records
+    # can pass any stmt to CountRemover to return SPASE_id's of records instead of counts of records
     # overriding attributes from parent class to now return Spase_id's matching desired criteria
     SDACStmt = CountRemover(Counts.SDACStmt,0)
     SPDFStmt = CountRemover(Counts.SPDFStmt,0)
@@ -394,191 +348,65 @@ class Links(Counts):
     
     
     def allRecords(self):
+        """Executes the FormatPrint function for all SQLite statements that do not have a
+        specified publisher."""
+
         # prints links for all records
-        rows = execution(self.totalStmt)
-        print("Total records are : ")
-        print(rows[:10])
-        
-        rows = execution(self.authorStmt)
-        print("Total records with at least one author are : ")
-        print(rows[:10])
-
-        rows = execution(self.pubStmt)
-        print("Total records with a publisher are : ")
-        print(rows[:10])
-
-        rows = execution(self.pubYrStmt)
-        print("Total records with a publication year are : ")
-        print(rows[:10])
-
-        rows = execution(self.datasetStmt)
-        print("Total records with a dataset are : ")
-        print(rows[:10])
-
-        rows = execution(self.licenseStmt)
-        print("Total records with a license are : ")
-        print(rows[:10])
-
-        rows = execution(self.urlStmt)
-        print("Total records with a url are : ")
-        print(rows[:10])
-
-        rows = execution(self.NASAurlStmt)
-        print("Total records with a NASA url are : ")
-        print(rows[:10])
-
-        rows = execution(self.PIStmt)
-        print("Total records with a persistent identifier are : ")
-        print(rows[:10])
-
-        rows = execution(self.descStmt)
-        print("Total records with a description are : ")
-        print(rows[:10])
-
-        rows = execution(self.citationStmt)
-        print("Total records with enough metadata for a citation are : ")
-        print(rows[:10])
-
-        rows = execution(self.complianceStmt)
-        print("Total records the meet the DCAT-US3 compliance are : ")
-        print(rows[:10])
-
-        rows = execution(self.AL1Stmt)
-        print("Total records that have at least one desired field are : ")
-        print(rows[:10])
-
-        rows = execution(self.AL2Stmt)
-        print("Total records that have at least two desired fields are : ")
-        print(rows[:10])
-        
-        rows = execution(self.AL3Stmt)
-        print("Total records that have at least three desired fields are : ")
-        print(rows[:10])
-
-        rows = execution(self.allStmt)
-        print("Total records that have all desired fields are : ")
-        print(rows[:10])
+        self.FormatPrint(self.totalStmt, "in the database")
+        self.FormatPrint(self.authorStmt, "with at least one author")
+        self.FormatPrint(self.pubStmt, "with a publisher")
+        self.FormatPrint(self.pubYrStmt, "with a publication year")
+        self.FormatPrint(self.datasetStmt, "with a dataset")
+        self.FormatPrint(self.licenseStmt, "with a license")
+        self.FormatPrint(self.urlStmt, "with a url")
+        self.FormatPrint(self.NASAurlStmt, "with a NASA url")
+        self.FormatPrint(self.PIStmt, "with a persistent identifier")
+        self.FormatPrint(self.descStmt, "with a description")
+        self.FormatPrint(self.citationStmt, "with citation info")
+        self.FormatPrint(self.complianceStmt, "that meet DCAT-US3 compliance")
+        self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
+        self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
+        self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
+        self.FormatPrint(self.allStmt, "that have all desired fields")
 
     def SDAC_Records(self):
+        """Executes the FormatPrint function for all SQLite statements with the
+        specified publisher, SDAC."""
+        
         # prints links for SDAC records only    
-        rows = execution(self.SDACStmt)
-        print("Total records that are published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACauthor)
-        print("Total records with at least one author published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACpubStmt)
-        print("Total records with a publisher published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACpubYrStmt)
-        print("Total records with a publication year published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACdatasetStmt)
-        print("Total records with a dataset published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDAClicenseStmt)
-        print("Total records with a license published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACurlStmt)
-        print("Total records with a url published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACNASAurlStmt)
-        print("Total records with a NASA url published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACPIStmt)
-        print("Total records with a persistent identifier published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACdescStmt)
-        print("Total records with a description published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACcitationStmt)
-        print("Total records that have enough data for a citation and are published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDACcomplianceStmt)
-        print("Total records that meet DCAT-US3 compliance published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDAC_AL1)
-        print("Total records that have at least one desired field published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDAC_AL2)
-        print("Total records that have at least two desired fields published by SDAC are : ")
-        print(rows[:10])
-
-        rows = execution(self.SDAC_AL3)
-        print("Total records that have at least three desired fields published by SDAC are : ")
-        print(rows[:10])
+        self.FormatPrint(self.SDACStmt, "published by SDAC")
+        self.FormatPrint(self.SDACauthor, "with at least one author published by SDAC")
+        self.FormatPrint(self.SDACpubStmt, "with a publisher published by SDAC")
+        self.FormatPrint(self.SDACpubYrStmt, "with a publication year published by SDAC")
+        self.FormatPrint(self.SDACdatasetStmt, "with a dataset published by SDAC")
+        self.FormatPrint(self.SDAClicenseStmt, "with a license published by SDAC")
+        self.FormatPrint(self.SDACurlStmt, "with a url published by SDAC")
+        self.FormatPrint(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
+        self.FormatPrint(self.SDACPIStmt, "with a persistent identifier published by SDAC")
+        self.FormatPrint(self.SDACdescStmt, "with a description published by SDAC")
+        self.FormatPrint(self.SDACcitationStmt, "with citation info published by SDAC")
+        self.FormatPrint(self.SDACcomplianceStmt, "that meet DCAT-US3 compliance published by SDAC")
+        self.FormatPrint(self.SDAC_AL1, "with at least one desired field published by SDAC")
+        self.FormatPrint(self.SDAC_AL2, "with at least two desired fields published by SDAC")
+        self.FormatPrint(self.SDAC_AL3, "with at least three desired fields published by SDAC")
 
     def SPDF_Records(self):
+        """Executes the FormatPrint function for all SQLite statements with the
+        specified publisher, SPDF."""
+        
         # prints links of SPDF records only
-        rows = execution(self.SPDFStmt)
-        print("Total records that are published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFauthor)
-        print("Total records with at least one author published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFpubStmt)
-        print("Total records with a publisher published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFpubYrStmt)
-        print("Total records with a publication year published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFdatasetStmt)
-        print("Total records with a dataset published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFlicenseStmt)
-        print("Total records with a license published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFurlStmt)
-        print("Total records with a url published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFNASAurlStmt)
-        print("Total records with a NASA url published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFPIStmt)
-        print("Total records with a persistent identifier published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFdescStmt)
-        print("Total records with a description published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFcitationStmt)
-        print("Total records that have enough data for a citation and are published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDFcomplianceStmt)
-        print("Total records that meet DCAT-US3 compliance published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDF_AL1)
-        print("Total records that have at least one desired field published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDF_AL2)
-        print("Total records that have at least two desired fields published by SPDF are : ")
-        print(rows[:10])
-
-        rows = execution(self.SPDF_AL3)
-        print("Total records that have at least three desired fields published by SPDF are : ")
-        print(rows[:10])
+        self.FormatPrint(self.SPDFStmt, "published by SPDF")
+        self.FormatPrint(self.SPDFauthor, "with at least one author published by SPDF")
+        self.FormatPrint(self.SPDFpubStmt, "with a publisher published by SPDF")
+        self.FormatPrint(self.SPDFpubYrStmt, "with a publication year published by SPDF")
+        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset published by SPDF")
+        self.FormatPrint(self.SPDFlicenseStmt, "with a license published by SPDF")
+        self.FormatPrint(self.SPDFurlStmt, "with a url published by SPDF")
+        self.FormatPrint(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
+        self.FormatPrint(self.SPDFPIStmt, "with a persistent identifier published by SPDF")
+        self.FormatPrint(self.SPDFdescStmt, "with a description published by SPDF")
+        self.FormatPrint(self.SPDFcitationStmt, "with citation info published by SPDF")
+        self.FormatPrint(self.SPDFcomplianceStmt, "that meet DCAT-US3 compliance published by SPDF")
+        self.FormatPrint(self.SPDF_AL1, "with at least one desired field published by SPDF")
+        self.FormatPrint(self.SPDF_AL2, "with at least two desired fields published by SPDF")
+        self.FormatPrint(self.SPDF_AL3, "with at least three desired fields published by SPDF")
