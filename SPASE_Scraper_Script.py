@@ -1,3 +1,12 @@
+"""If additional fields were to be extracted, such as ORCID id, author institution, etc., all one
+needs to do is navigate to the for loop that iterates through the children of the desired child of the root 
+(NumericalData/DisplayData -> ResourceHeader -> Contact) for example, and then add an
+elif statement to check the child.tags for the desired field. Once that tag is found, store its text
+into a variable to be returned by the function. If there are multiple authors, make the return variable a list
+and append the values to it in the same order you append the author names to their list. Further edits would need
+to be made to the SPASE_Analysis notebook, create_tables and add_Metadata methods in SQLiteFun, and the SQLite
+query statements in the QueryPrinter file to address the new return."""
+
 def SPASE_Scraper(path):
     """Takes path of a .xml SPASE record file and returns a tuple of values of varying types which hold all 
     desired metadata and the fields they came from. This will collect the desired metadata following the 
