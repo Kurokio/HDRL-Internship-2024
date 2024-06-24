@@ -215,7 +215,7 @@ class Counts(object):
         self.FormatPrint(self.authorStmt, "with at least one author")
         self.FormatPrint(self.pubStmt, "with a publisher")
         self.FormatPrint(self.pubYrStmt, "with a publication year")
-        self.FormatPrint(self.datasetStmt, "with a dataset")
+        self.FormatPrint(self.datasetStmt, "with a dataset name")
         self.FormatPrint(self.licenseStmt, "with a license")
         self.FormatPrint(self.urlStmt, "with a url")
         self.FormatPrint(self.NASAurlStmt, "with a NASA url")
@@ -237,7 +237,7 @@ class Counts(object):
         self.FormatPrint(self.SDACauthor, "with at least one author published by SDAC")
         self.FormatPrint(self.SDACpubStmt, "with a publisher published by SDAC")
         self.FormatPrint(self.SDACpubYrStmt, "with a publication year published by SDAC")
-        self.FormatPrint(self.SDACdatasetStmt, "with a dataset published by SDAC")
+        self.FormatPrint(self.SDACdatasetStmt, "with a dataset name published by SDAC")
         self.FormatPrint(self.SDAClicenseStmt, "with a license published by SDAC")
         self.FormatPrint(self.SDACurlStmt, "with a url published by SDAC")
         self.FormatPrint(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
@@ -258,7 +258,7 @@ class Counts(object):
         self.FormatPrint(self.SPDFauthor, "with at least one author published by SPDF")
         self.FormatPrint(self.SPDFpubStmt, "with a publisher published by SPDF")
         self.FormatPrint(self.SPDFpubYrStmt, "with a publication year published by SPDF")
-        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset published by SPDF")
+        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset name published by SPDF")
         self.FormatPrint(self.SPDFlicenseStmt, "with a license published by SPDF")
         self.FormatPrint(self.SPDFurlStmt, "with a url published by SPDF")
         self.FormatPrint(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
@@ -295,6 +295,7 @@ class Links(Counts):
         rows = execution(stmt)
         print("The records " + criteria + " are:")
         print(rows[:10])
+        return rows[:10]
     
     # can pass any stmt to CountRemover to return SPASE_id's of records instead of counts of records
     # overriding attributes from parent class to now return Spase_id's matching desired criteria
@@ -352,11 +353,11 @@ class Links(Counts):
         specified publisher."""
 
         # prints links for all records
-        self.FormatPrint(self.totalStmt, "in the database")
-        self.FormatPrint(self.authorStmt, "with at least one author")
-        self.FormatPrint(self.pubStmt, "with a publisher")
+        links = self.FormatPrint(self.totalStmt, "in the database")
+        authors = self.FormatPrint(self.authorStmt, "with at least one author")
+        """self.FormatPrint(self.pubStmt, "with a publisher")
         self.FormatPrint(self.pubYrStmt, "with a publication year")
-        self.FormatPrint(self.datasetStmt, "with a dataset")
+        self.FormatPrint(self.datasetStmt, "with a dataset name")
         self.FormatPrint(self.licenseStmt, "with a license")
         self.FormatPrint(self.urlStmt, "with a url")
         self.FormatPrint(self.NASAurlStmt, "with a NASA url")
@@ -367,7 +368,8 @@ class Links(Counts):
         self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
         self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
         self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
-        self.FormatPrint(self.allStmt, "that have all desired fields")
+        self.FormatPrint(self.allStmt, "that have all desired fields") """
+        return links, authors
 
     def SDAC_Records(self):
         """Executes the FormatPrint function for all SQLite statements with the
@@ -378,7 +380,7 @@ class Links(Counts):
         self.FormatPrint(self.SDACauthor, "with at least one author published by SDAC")
         self.FormatPrint(self.SDACpubStmt, "with a publisher published by SDAC")
         self.FormatPrint(self.SDACpubYrStmt, "with a publication year published by SDAC")
-        self.FormatPrint(self.SDACdatasetStmt, "with a dataset published by SDAC")
+        self.FormatPrint(self.SDACdatasetStmt, "with a dataset name published by SDAC")
         self.FormatPrint(self.SDAClicenseStmt, "with a license published by SDAC")
         self.FormatPrint(self.SDACurlStmt, "with a url published by SDAC")
         self.FormatPrint(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
@@ -399,7 +401,7 @@ class Links(Counts):
         self.FormatPrint(self.SPDFauthor, "with at least one author published by SPDF")
         self.FormatPrint(self.SPDFpubStmt, "with a publisher published by SPDF")
         self.FormatPrint(self.SPDFpubYrStmt, "with a publication year published by SPDF")
-        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset published by SPDF")
+        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset name published by SPDF")
         self.FormatPrint(self.SPDFlicenseStmt, "with a license published by SPDF")
         self.FormatPrint(self.SPDFurlStmt, "with a url published by SPDF")
         self.FormatPrint(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
