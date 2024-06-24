@@ -10,6 +10,8 @@ execution: Executes a given SQLite statement and returns the result in a list
 import sqlite3
 
 # add table to existing db
+# Test Results holds input of a 1 or 0 depending on if record meets tested criteria
+
 def create_tables():
     """Connects to the given SQLite database, creates a cursor object, and calls the executescript method 
     with the sql_statements argument. These changes are then committed which creates the MetadataEntries, 
@@ -33,7 +35,7 @@ def create_tables():
         );""",
         """CREATE TABLE IF NOT EXISTS MetadataSources (
                 rowNum INTEGER PRIMARY KEY, 
-                SPASE_id TEXT NOT NULL UNIQUE, 
+                SPASE_id TEXT NOT NULL UNIQUE,
                 author_source TEXT,
                 publisher_source TEXT,
                 publication_yr_source TEXT,
@@ -48,7 +50,18 @@ def create_tables():
                 SPASE_id TEXT NOT NULL UNIQUE, 
                 FAIR_Score INTEGER,
                 FAIR_ScoreDate TEXT,
-                MostRecent TEXT
+                MostRecent TEXT,
+                has_author INTEGER,
+                has_pub INTEGER,
+                has_pubYr INTEGER,
+                has_dataset INTEGER,
+                has_license INTEGER,
+                has_url INTEGER,
+                has_NASAurl INTEGER,
+                has_PI INTEGER,
+                has_desc INTEGER,
+                has_citation INTEGER,
+                has_compliance INTEGER
         );"""
         """CREATE TABLE IF NOT EXISTS Records (
                 rowNum INTEGER PRIMARY KEY, 
@@ -130,8 +143,10 @@ def add_TestResults(conn, entry):
     :rtype: int
     """
     
-    sql = '''INSERT INTO TestResults(SPASE_id,FAIR_Score,FAIR_ScoreDate,MostRecent)
-            VALUES(?,?,?,?) '''
+    sql = '''INSERT INTO TestResults(SPASE_id,FAIR_Score,FAIR_ScoreDate,MostRecent,has_author,
+                has_pub,has_pubYr,has_dataset,has_license,has_url,has_NASAurl,has_PI,has_desc,
+                has_citation,has_compliance)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, entry)
     conn.commit()
@@ -195,27 +210,3 @@ def SDAC_records(yr):
     except sqlite3.Error as e:
         print(e)
         
-def create_Tests():
-    # table to input a 1 or 0 depending on if record meets tested criteria
-    sql = (
-        """CREATE TABLE IF NOT EXISTS Tests ( 
-                SPASE_id TEXT NOT NULL, 
-                has_author INTEGER,
-                has_pub INTEGER,
-                has_pubYr INTEGER,
-                has_dataset INTEGER,
-                has_license INTEGER,
-                has_url INTEGER,
-                has_NASAurl INTEGER,
-                has_PI INTEGER,
-                has_desc INTEGER,
-                has_citation INTEGER,
-                has_compliance INTEGER);""")
-    
-    try:
-        with sqlite3.connect('SPASE_Data.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute(sql)
-            conn.commit()
-    except sqlite3.Error as e:
-        print(e)
