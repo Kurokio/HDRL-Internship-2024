@@ -26,7 +26,7 @@ def create_tables():
                 authorRole TEXT,
                 publisher TEXT,
                 publicationYr TEXT,
-                dataset TEXT,
+                datasetName TEXT,
                 license TEXT,
                 URL TEXT,
                 prodKey TEXT,
@@ -39,7 +39,7 @@ def create_tables():
                 author_source TEXT,
                 publisher_source TEXT,
                 publication_yr_source TEXT,
-                dataset_source TEXT,
+                datasetName_source TEXT,
                 license_source TEXT,
                 datalink_source TEXT,
                 description_source TEXT,
@@ -54,7 +54,7 @@ def create_tables():
                 has_author INTEGER,
                 has_pub INTEGER,
                 has_pubYr INTEGER,
-                has_dataset INTEGER,
+                has_datasetName INTEGER,
                 has_license INTEGER,
                 has_url INTEGER,
                 has_NASAurl INTEGER,
@@ -97,7 +97,7 @@ def add_Metadata(conn, entry):
     :rtype: int
     """
     
-    sql = '''INSERT INTO MetadataEntries(SPASE_id,author,authorRole,publisher,publicationYr,dataset,
+    sql = '''INSERT INTO MetadataEntries(SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
             license,URL,prodKey,description,PI)
             VALUES(?,?,?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
@@ -121,7 +121,7 @@ def add_Sources(conn, entry):
     """
     
     sql = '''INSERT INTO MetadataSources(SPASE_id,author_source,publisher_source,
-            publication_yr_source,dataset_source,license_source,datalink_source,description_source,PI_source)
+            publication_yr_source,datasetName_source,license_source,datalink_source,description_source,PI_source)
             VALUES(?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, entry)
@@ -144,9 +144,9 @@ def add_TestResults(conn, entry):
     """
     
     sql = '''INSERT INTO TestResults(SPASE_id,FAIR_Score,FAIR_ScoreDate,MostRecent,has_author,
-                has_pub,has_pubYr,has_dataset,has_license,has_url,has_NASAurl,has_PI,has_desc,
+                has_pub,has_pubYr,has_datasetName,has_license,has_url,has_NASAurl,has_PI,has_desc,
                 has_citation,has_compliance)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
     cur.execute(sql, entry)
     conn.commit()
@@ -186,7 +186,7 @@ def execution(stmt):
     :return: The list of the results from the SQLite statement
     :rtype: list
     """
-    # create a database connection, executes statement, and returns all the results
+    # create a database connection, executes SELECT statement, and returns all the results
     try:
         with sqlite3.connect("SPASE_Data.db") as conn:
             cur = conn.cursor()
@@ -195,6 +195,25 @@ def execution(stmt):
     except sqlite3.Error as e:
         print(e)
     return [row[0] for row in rows]
+
+# executes given SQLite statement
+def executionALL(stmt):
+    """Connects to the given SQLite database, creates a cursor object, and calls the execute method 
+    with the stmt argument. Calls the fetchall method to get all rows returned by the statement that 
+    was executed. This also displays error messages if any arise. Lastly, it returns the results of 
+    the SQLite statement in a list
+    
+    :param stmt: A string of the SQLite statement to be executed.
+    :type stmt: String
+    """
+    # create a database connection and execute statement
+    try:
+        with sqlite3.connect("SPASE_Data.db") as conn:
+            cur = conn.cursor()
+            cur.execute(stmt)
+            conn.commit()
+    except sqlite3.Error as e:
+        print(e)
 
 # How many records published by SDAC in X year?
 def SDAC_records(yr):
