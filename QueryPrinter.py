@@ -68,7 +68,7 @@ class Counts(object):
     authorStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE author NOT LIKE "" ;"""
     pubStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE publisher NOT LIKE "" ;"""
     pubYrStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE publicationYr NOT LIKE "" ;"""
-    datasetStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE dataset NOT LIKE "" ;"""
+    datasetNameStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE datasetName NOT LIKE "" ;"""
     licenseStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE license LIKE "%cc0%" 
                         OR license LIKE "%Creative Commons Zero v1.0 Universal%" ;"""
     urlStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE url NOT LIKE "" ;"""
@@ -77,13 +77,15 @@ class Counts(object):
     PIStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE PI NOT LIKE "" ;"""
     descStmt = """SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries WHERE description NOT LIKE "" ;"""
     has_citation = """author NOT LIKE ""
-                    AND dataset NOT LIKE ""
+                    AND datasetName NOT LIKE ""
                     AND publicationYr NOT LIKE ""
                     AND publisher NOT LIKE "" """
     citationStmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
                     WHERE {has_citation};"""
+    citationWOPIStmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
+                    WHERE {has_citation} AND PI LIKE "" ;"""
     has_compliance = """ description NOT LIKE ""
-                    AND dataset NOT LIKE ""
+                    AND datasetName NOT LIKE ""
                     AND PI NOT LIKE "" """
     complianceStmt = f"""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
                     WHERE {has_compliance};"""
@@ -182,8 +184,8 @@ class Counts(object):
     SPDFpubStmt = SPDFIntersect + CountRemover(pubStmt,1)
     SDACpubYrStmt = SDACIntersect + CountRemover(pubYrStmt,1)
     SPDFpubYrStmt = SPDFIntersect + CountRemover(pubYrStmt,1)
-    SDACdatasetStmt = SDACIntersect + CountRemover(datasetStmt,1)
-    SPDFdatasetStmt = SPDFIntersect + CountRemover(datasetStmt,1)
+    SDACdatasetNameStmt = SDACIntersect + CountRemover(datasetNameStmt,1)
+    SPDFdatasetNameStmt = SPDFIntersect + CountRemover(datasetNameStmt,1)
     SDAClicenseStmt = SDACIntersect + CountRemover(licenseStmt,1)
     SPDFlicenseStmt = SPDFIntersect + CountRemover(licenseStmt,1)
     SDACurlStmt = SDACIntersect + CountRemover(urlStmt,1)
@@ -196,6 +198,8 @@ class Counts(object):
     SPDFdescStmt = SPDFIntersect + CountRemover(descStmt,1)
     SDACcitationStmt = SDACIntersect + CountRemover(citationStmt,1)
     SPDFcitationStmt = SPDFIntersect + CountRemover(citationStmt,1)
+    SDACcitationWOPIStmt = SDACIntersect + CountRemover(citationWOPIStmt,1)
+    SPDFcitationWOPIStmt = SPDFIntersect + CountRemover(citationWOPIStmt,1)
     SDACcomplianceStmt = SDACIntersect + CountRemover(complianceStmt,1)
     SPDFcomplianceStmt = SPDFIntersect + CountRemover(complianceStmt,1)
 
@@ -215,13 +219,14 @@ class Counts(object):
         self.FormatPrint(self.authorStmt, "with at least one author")
         self.FormatPrint(self.pubStmt, "with a publisher")
         self.FormatPrint(self.pubYrStmt, "with a publication year")
-        self.FormatPrint(self.datasetStmt, "with a dataset name")
+        self.FormatPrint(self.datasetNameStmt, "with a dataset name")
         self.FormatPrint(self.licenseStmt, "with a license")
         self.FormatPrint(self.urlStmt, "with a url")
         self.FormatPrint(self.NASAurlStmt, "with a NASA url")
         self.FormatPrint(self.PIStmt, "with a persistent identifier")
         self.FormatPrint(self.descStmt, "with a description")
         self.FormatPrint(self.citationStmt, "with citation info")
+        self.FormatPrint(self.citationWOPIStmt, "with citation info but no PI")
         self.FormatPrint(self.complianceStmt, "that meet DCAT-US3 compliance")
         self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
         self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
@@ -237,13 +242,14 @@ class Counts(object):
         self.FormatPrint(self.SDACauthor, "with at least one author published by SDAC")
         self.FormatPrint(self.SDACpubStmt, "with a publisher published by SDAC")
         self.FormatPrint(self.SDACpubYrStmt, "with a publication year published by SDAC")
-        self.FormatPrint(self.SDACdatasetStmt, "with a dataset name published by SDAC")
+        self.FormatPrint(self.SDACdatasetNameStmt, "with a dataset name published by SDAC")
         self.FormatPrint(self.SDAClicenseStmt, "with a license published by SDAC")
         self.FormatPrint(self.SDACurlStmt, "with a url published by SDAC")
         self.FormatPrint(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
         self.FormatPrint(self.SDACPIStmt, "with a persistent identifier published by SDAC")
         self.FormatPrint(self.SDACdescStmt, "with a description published by SDAC")
         self.FormatPrint(self.SDACcitationStmt, "with citation info published by SDAC")
+        self.FormatPrint(self.SDACcitationWOPIStmt, "with citation info but no PI published by SDAC")
         self.FormatPrint(self.SDACcomplianceStmt, "that meet DCAT-US3 compliance published by SDAC")
         self.FormatPrint(self.SDAC_AL1, "with at least one desired field published by SDAC")
         self.FormatPrint(self.SDAC_AL2, "with at least two desired fields published by SDAC")
@@ -258,13 +264,14 @@ class Counts(object):
         self.FormatPrint(self.SPDFauthor, "with at least one author published by SPDF")
         self.FormatPrint(self.SPDFpubStmt, "with a publisher published by SPDF")
         self.FormatPrint(self.SPDFpubYrStmt, "with a publication year published by SPDF")
-        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset name published by SPDF")
+        self.FormatPrint(self.SPDFdatasetNameStmt, "with a dataset name published by SPDF")
         self.FormatPrint(self.SPDFlicenseStmt, "with a license published by SPDF")
         self.FormatPrint(self.SPDFurlStmt, "with a url published by SPDF")
         self.FormatPrint(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
         self.FormatPrint(self.SPDFPIStmt, "with a persistent identifier published by SPDF")
         self.FormatPrint(self.SPDFdescStmt, "with a description published by SPDF")
         self.FormatPrint(self.SPDFcitationStmt, "with citation info published by SPDF")
+        self.FormatPrint(self.SPDFcitationWOPIStmt, "with citation info but no PI published by SPDF")
         self.FormatPrint(self.SPDFcomplianceStmt, "that meet DCAT-US3 compliance published by SPDF")
         self.FormatPrint(self.SPDF_AL1, "with at least one desired field published by SPDF")
         self.FormatPrint(self.SPDF_AL2, "with at least two desired fields published by SPDF")
@@ -293,9 +300,9 @@ class Links(Counts):
         :type criteria: String
         """
         rows = execution(stmt)
-        print("The records " + criteria + " are:")
-        print(rows[:10])
-        return rows[:10]
+        #print("The records " + criteria + " are:")
+        #print(rows[:10])
+        return rows
     
     # can pass any stmt to CountRemover to return SPASE_id's of records instead of counts of records
     # overriding attributes from parent class to now return Spase_id's matching desired criteria
@@ -309,8 +316,8 @@ class Links(Counts):
     SDACpubYrStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.pubYrStmt,1)
     SDACpubYrStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.pubYrStmt,1)
     SPDFpubYrStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.pubYrStmt,1)
-    SDACdatasetStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.datasetStmt,1)
-    SPDFdatasetStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.datasetStmt,1)
+    SDACdatasetNameStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.datasetNameStmt,1)
+    SPDFdatasetNameStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.datasetNameStmt,1)
     SDAClicenseStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.licenseStmt,1)
     SPDFlicenseStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.licenseStmt,1)
     SDACurlStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.urlStmt,1)
@@ -323,6 +330,8 @@ class Links(Counts):
     SPDFdescStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.descStmt,1)
     SDACcitationStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.citationStmt,1)
     SPDFcitationStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.citationStmt,1)
+    SDACcitationWOPIStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.citationWOPIStmt,1)
+    SPDFcitationWOPIStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.citationWOPIStmt,1)
     SDACcomplianceStmt = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.complianceStmt,1)
     SPDFcomplianceStmt = CountRemover(Counts.SPDFIntersect,0) + CountRemover(Counts.complianceStmt,1)
     SDAC_AL1 = CountRemover(Counts.SDACIntersect,0) + CountRemover(Counts.AL1Stmt,1)
@@ -334,13 +343,14 @@ class Links(Counts):
     authorStmt = CountRemover(Counts.authorStmt,0)
     pubStmt = CountRemover(Counts.pubStmt,0)
     pubYrStmt = CountRemover(Counts.pubYrStmt,0)
-    datasetStmt = CountRemover(Counts.datasetStmt,0)
+    datasetNameStmt = CountRemover(Counts.datasetNameStmt,0)
     licenseStmt = CountRemover(Counts.licenseStmt,0)
     urlStmt = CountRemover(Counts.urlStmt,0)
     NASAurlStmt = CountRemover(Counts.NASAurlStmt,0)
     PIStmt = CountRemover(Counts.PIStmt,0)
     descStmt = CountRemover(Counts.descStmt,0)
     citationStmt = CountRemover(Counts.citationStmt,0)
+    citationWOPIStmt = CountRemover(Counts.citationWOPIStmt,0)
     complianceStmt = CountRemover(Counts.complianceStmt,0)
     AL1Stmt = CountRemover(Counts.AL1Stmt,0)
     AL2Stmt = CountRemover(Counts.AL2Stmt,0)
@@ -353,23 +363,24 @@ class Links(Counts):
         specified publisher."""
 
         # prints links for all records
-        links = self.FormatPrint(self.totalStmt, "in the database")
+        #links = self.FormatPrint(self.totalStmt, "in the database")
         authors = self.FormatPrint(self.authorStmt, "with at least one author")
         """self.FormatPrint(self.pubStmt, "with a publisher")
         self.FormatPrint(self.pubYrStmt, "with a publication year")
-        self.FormatPrint(self.datasetStmt, "with a dataset name")
+        self.FormatPrint(self.datasetNameStmt, "with a dataset name")
         self.FormatPrint(self.licenseStmt, "with a license")
         self.FormatPrint(self.urlStmt, "with a url")
         self.FormatPrint(self.NASAurlStmt, "with a NASA url")
         self.FormatPrint(self.PIStmt, "with a persistent identifier")
         self.FormatPrint(self.descStmt, "with a description")
         self.FormatPrint(self.citationStmt, "with citation info")
+        self.FormatPrint(self.citationWOPIStmt, "with citation info but no PI")
         self.FormatPrint(self.complianceStmt, "that meet DCAT-US3 compliance")
         self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
         self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
         self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
         self.FormatPrint(self.allStmt, "that have all desired fields") """
-        return links, authors
+        return authors
 
     def SDAC_Records(self):
         """Executes the FormatPrint function for all SQLite statements with the
@@ -380,13 +391,14 @@ class Links(Counts):
         self.FormatPrint(self.SDACauthor, "with at least one author published by SDAC")
         self.FormatPrint(self.SDACpubStmt, "with a publisher published by SDAC")
         self.FormatPrint(self.SDACpubYrStmt, "with a publication year published by SDAC")
-        self.FormatPrint(self.SDACdatasetStmt, "with a dataset name published by SDAC")
+        self.FormatPrint(self.SDACdatasetNameStmt, "with a dataset name published by SDAC")
         self.FormatPrint(self.SDAClicenseStmt, "with a license published by SDAC")
         self.FormatPrint(self.SDACurlStmt, "with a url published by SDAC")
         self.FormatPrint(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
         self.FormatPrint(self.SDACPIStmt, "with a persistent identifier published by SDAC")
         self.FormatPrint(self.SDACdescStmt, "with a description published by SDAC")
         self.FormatPrint(self.SDACcitationStmt, "with citation info published by SDAC")
+        self.FormatPrint(self.SDACcitationWOPIStmt, "with citation info but no PI published by SDAC")
         self.FormatPrint(self.SDACcomplianceStmt, "that meet DCAT-US3 compliance published by SDAC")
         self.FormatPrint(self.SDAC_AL1, "with at least one desired field published by SDAC")
         self.FormatPrint(self.SDAC_AL2, "with at least two desired fields published by SDAC")
@@ -401,13 +413,14 @@ class Links(Counts):
         self.FormatPrint(self.SPDFauthor, "with at least one author published by SPDF")
         self.FormatPrint(self.SPDFpubStmt, "with a publisher published by SPDF")
         self.FormatPrint(self.SPDFpubYrStmt, "with a publication year published by SPDF")
-        self.FormatPrint(self.SPDFdatasetStmt, "with a dataset name published by SPDF")
+        self.FormatPrint(self.SPDFdatasetNameStmt, "with a dataset name published by SPDF")
         self.FormatPrint(self.SPDFlicenseStmt, "with a license published by SPDF")
         self.FormatPrint(self.SPDFurlStmt, "with a url published by SPDF")
         self.FormatPrint(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
         self.FormatPrint(self.SPDFPIStmt, "with a persistent identifier published by SPDF")
         self.FormatPrint(self.SPDFdescStmt, "with a description published by SPDF")
         self.FormatPrint(self.SPDFcitationStmt, "with citation info published by SPDF")
+        self.FormatPrint(self.SPDFcitationWOPIStmt, "with citation info but no PI published by SPDF")
         self.FormatPrint(self.SPDFcomplianceStmt, "that meet DCAT-US3 compliance published by SPDF")
         self.FormatPrint(self.SPDF_AL1, "with at least one desired field published by SPDF")
         self.FormatPrint(self.SPDF_AL2, "with at least two desired fields published by SPDF")
