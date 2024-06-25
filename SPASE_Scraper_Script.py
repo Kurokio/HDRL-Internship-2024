@@ -61,8 +61,8 @@ def SPASE_Scraper(path):
     pubDateField = ""
     pub = ""
     pubField = ""
-    dataset = ""
-    datasetField = ""
+    datasetName = ""
+    datasetNameField = ""
     desc = ""
     descField = ""
     PI = ""
@@ -80,9 +80,9 @@ def SPASE_Scraper(path):
         # find backup Dataset Name
         if child.tag.endswith("ResourceName"):
             targetChild = child
-            dataset = child.text
+            datasetName = child.text
             # record field where dataset was collected
-            datasetField = (parent + "/ResourceHeader/ResourceName")
+            datasetNameField = (parent + "/ResourceHeader/ResourceName")
         # find Description
         elif child.tag.endswith("Description"):
             desc = child.text
@@ -178,8 +178,6 @@ def SPASE_Scraper(path):
                     # iterate thru children to locate URL
                     for child in targetChild:
                         if child.tag.endswith("URL"):
-                            # check if url is one for consideration
-                            #if ("nasa.gov" or "virtualsolar.org") in child.text:
                             url = child.text
                             datalinkField = (parent + "/AccessInformation/AccessURL/URL")
                             # provide "NULL" value in case no keys are found
@@ -225,5 +223,5 @@ def SPASE_Scraper(path):
         continue
            
     # return stmt
-    return (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, dataset, datasetField, 
+    return (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, datasetNameField, 
             desc, descField, PI, PIField, AccessRights, licenseField, datalinkField)
