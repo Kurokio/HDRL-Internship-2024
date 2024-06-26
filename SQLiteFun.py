@@ -61,7 +61,8 @@ def create_tables():
                 has_PI INTEGER,
                 has_desc INTEGER,
                 has_citation INTEGER,
-                has_compliance INTEGER
+                has_compliance INTEGER,
+                Errors TEXT
         );"""
         """CREATE TABLE IF NOT EXISTS Records (
                 rowNum INTEGER PRIMARY KEY, 
@@ -145,8 +146,8 @@ def add_TestResults(conn, entry):
     
     sql = '''INSERT INTO TestResults(SPASE_id,FAIR_Score,FAIR_ScoreDate,MostRecent,has_author,
                 has_pub,has_pubYr,has_datasetName,has_license,has_url,has_NASAurl,has_PI,has_desc,
-                has_citation,has_compliance)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
+                has_citation,has_compliance, Errors)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
     cur.execute(sql, entry)
     conn.commit()
