@@ -65,8 +65,8 @@ def SPASE_Scraper(path):
     datasetNameField = ""
     desc = ""
     descField = ""
-    PI = ""
-    PIField = ""
+    PID = ""
+    PIDField = ""
     licenseField = ""
     datalinkField = ""
     PI_Child = None
@@ -89,8 +89,8 @@ def SPASE_Scraper(path):
             descField = (parent + "/ResourceHeader/Description")
         # find Persistent Identifier
         elif child.tag.endswith("DOI"):
-            PI = child.text
-            PIField = (parent+ "/DOI")
+            PID = child.text
+            PIDField = (parent+ "/DOI")
         # find Publication Info
         elif child.tag.endswith("PublicationInfo"):
             PI_Child = child
@@ -224,4 +224,4 @@ def SPASE_Scraper(path):
            
     # return stmt
     return (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, datasetNameField, 
-            desc, descField, PI, PIField, AccessRights, licenseField, datalinkField)
+            desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField)
