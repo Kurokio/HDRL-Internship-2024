@@ -31,7 +31,7 @@ def create_tables():
                 URL TEXT,
                 prodKey TEXT,
                 description TEXT,
-                PI TEXT
+                PID TEXT
         );""",
         """CREATE TABLE IF NOT EXISTS MetadataSources (
                 rowNum INTEGER PRIMARY KEY, 
@@ -43,7 +43,7 @@ def create_tables():
                 license_source TEXT,
                 datalink_source TEXT,
                 description_source TEXT,
-                PI_source TEXT
+                PID_source TEXT
         );"""
         """CREATE TABLE IF NOT EXISTS TestResults (
                 rowNum INTEGER PRIMARY KEY, 
@@ -58,7 +58,7 @@ def create_tables():
                 has_license INTEGER,
                 has_url INTEGER,
                 has_NASAurl INTEGER,
-                has_PI INTEGER,
+                has_PID INTEGER,
                 has_desc INTEGER,
                 has_citation INTEGER,
                 has_compliance INTEGER,
@@ -99,7 +99,7 @@ def add_Metadata(conn, entry):
     """
     
     sql = '''INSERT INTO MetadataEntries(SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
-            license,URL,prodKey,description,PI)
+            license,URL,prodKey,description,PID)
             VALUES(?,?,?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, entry)
@@ -122,7 +122,7 @@ def add_Sources(conn, entry):
     """
     
     sql = '''INSERT INTO MetadataSources(SPASE_id,author_source,publisher_source,
-            publication_yr_source,datasetName_source,license_source,datalink_source,description_source,PI_source)
+            publication_yr_source,datasetName_source,license_source,datalink_source,description_source,PID_source)
             VALUES(?,?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, entry)
@@ -145,7 +145,7 @@ def add_TestResults(conn, entry):
     """
     
     sql = '''INSERT INTO TestResults(SPASE_id,FAIR_Score,FAIR_ScoreDate,MostRecent,has_author,
-                has_pub,has_pubYr,has_datasetName,has_license,has_url,has_NASAurl,has_PI,has_desc,
+                has_pub,has_pubYr,has_datasetName,has_license,has_url,has_NASAurl,has_PID,has_desc,
                 has_citation,has_compliance, Errors)
             VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
