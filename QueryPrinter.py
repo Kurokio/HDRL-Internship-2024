@@ -286,18 +286,21 @@ class Links(Counts):
     split into 3 categories: all records, SDAC records, and SPDF records. The results are the SPASE_id's of
     the records that match the criteria given by the SQLite statements."""
     
-    # print method for links that prints the first 10 links matching criteria given
+    # print method for links that prints the first 10 links matching criteria given and returns list of all links that match
     @classmethod
     def FormatPrint(self, stmt, criteria):
         """Prints the results for a given statement in their correct format. The first thing printed 
         is a sentence using the criteria argument, which gives context to the user of which analysis 
         question is being answered. In this case, the results are SPASE_id's, so it prints the 
-        SPASE_id's of the records that match the statement given.
+        SPASE_id's of the records that match the statement given. Lastly, it returns the list of all
+        links that match the criteria to then be used to update the TestResults table.
 
         :param stmt: A string of the SQLite statement that is executed
         :type stmt: String
         :param criteria: A string explaining what the resulting number is for.
         :type criteria: String
+        :return: The list of SPASE records that match the tested criteria
+        :rtype: list
         """
         rows = execution(stmt)
         #print("The records " + criteria + " are:")
@@ -360,7 +363,10 @@ class Links(Counts):
     
     def allRecords(self):
         """Executes the FormatPrint function for all SQLite statements that do not have a
-        specified publisher."""
+        specified publisher and returns the lists.
+        
+        :return: The list of all SPASE records that match their specific criteria.
+        :rtype: tuple"""
 
         # prints links for all records
         #links = self.FormatPrint(self.totalStmt, "in the database")
