@@ -1,13 +1,33 @@
 """ Function List:
+create_sqlite_database: Creates a new SQLite database 
 create_tables: Creates the MetadataEntries, MetadataSources, TestResults, and Records tables
 add_Metadata: Inserts values into the MetadataEntries table and returns its row number
 add_Sources: Inserts values into the MetadataSources table and returns its row number
 add_TestResults: Inserts values into the TestResults table and returns its row number
 add_Records: Inserts values into the Records table and returns its row number
-execution: Executes a given SQLite statement and returns the result in a list
+execution: Executes a given SQLite SELECT statement and returns the result in a list
+executionALL: Executes a given SQLite statement
+TestUpdate: Updates the given column's values in TestResults to a 1 for the records given
 """
 
 import sqlite3
+
+def create_sqlite_database(filename):
+    """Creates a database connection to a new SQLite database with the name provided. This also tells
+    you the SQLite version as well as any errors that may occur.
+    
+    :param filename: String that contains the desired name of the database
+    :type filename: String
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(filename)
+        print(sqlite3.sqlite_version)
+    except sqlite3.Error as e:
+        print(e)
+    finally:
+        if conn:
+            conn.close()
 
 # add table to existing db
 # Test Results holds input of a 1 or 0 depending on if record meets tested criteria
@@ -200,9 +220,7 @@ def execution(stmt):
 # executes given SQLite statement
 def executionALL(stmt):
     """Connects to the given SQLite database, creates a cursor object, and calls the execute method 
-    with the stmt argument. Calls the fetchall method to get all rows returned by the statement that 
-    was executed. This also displays error messages if any arise. Lastly, it returns the results of 
-    the SQLite statement in a list
+    with the stmt argument. This also displays error messages if any arise.
     
     :param stmt: A string of the SQLite statement to be executed.
     :type stmt: String
@@ -230,3 +248,23 @@ def SDAC_records(yr):
     except sqlite3.Error as e:
         print(e)
         
+# updates the TestResults column provided for all links that fulfill a certain test so they have a 1/"True"
+def TestUpdate(records, column):
+    """Iterates through the parameter records to set the value for each record in the column provided as 1.
+    For each record, a SQLite UPDATE statement is made which is then passed to the executionALL function 
+    to be executed. The rowNum of the record updated is also collected by calling the execution function.
+    
+    :param records: A list of the links that pass a specific analysis test.
+    :type records: list
+    :param column: A string of the TestResults column to be updated.
+    :type column: string
+    """
+    for record in records:
+        #print(record + " is the current record")
+        Stmt = f""" UPDATE TestResults
+                            SET '{column}' = 1
+                            WHERE SPASE_id = '{record}' """
+        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""")
+        executionALL(Stmt)
+        #print(f"Updated a TestResults entry with the row number {Record_id}")
+        #print("===========================================================================")
