@@ -2,10 +2,10 @@
 needs to do is navigate to the for loop that iterates through the children of the desired child of the root 
 (NumericalData/DisplayData -> ResourceHeader -> Contact) for example, and then add an
 elif statement to check the child.tags for the desired field. Once that tag is found, store its text
-into a variable to be returned by the function. If there are multiple authors, make the return variable a list
-and append the values to it in the same order you append the author names to their list. Further edits would need
-to be made to the SPASE_Analysis notebook, create_tables and add_Metadata methods in SQLiteFun, and the SQLite
-query statements in the QueryPrinter file to address the new return."""
+into a variable to be returned by the function. If there are multiple authors, make the return variables lists
+and append the role values to the roles list in the same order you append the author names to their list. 
+Further edits would need to be made to the SPASE_Analysis notebook, create_tables and add_TableName methods 
+in SQLiteFun, and the SQLite query statements in the QueryPrinter file to address the new return."""
 
 def SPASE_Scraper(path):
     """Takes path of a .xml SPASE record file and returns a tuple of values of varying types which hold all 
@@ -21,6 +21,7 @@ def SPASE_Scraper(path):
     
     import xml.etree.ElementTree as ET
     import os
+    from datetime import datetime
     
     # establish path of XML file
     print("Scraping " + path)
@@ -36,6 +37,8 @@ def SPASE_Scraper(path):
     else:
         print(path + " is not a file or not an xml file")
         
+    # collect version number
+    version = root[0].text
     
     # iterate thru NumericalData/DisplayData to obtain ResourceID and locate ResourceHeader
     for child in root[1]:
@@ -50,7 +53,7 @@ def SPASE_Scraper(path):
         elif child.tag.endswith("ResourceHeader"):
             targetChild = child
 
-    # obtain Author, Publication Date, Publisher, Persistent Identifier, and Dataset Name
+    # obtain Author, Publication Date, Publisher, Persistent Identifier, Description, ReleaseDate, and Dataset Name
 
     # define vars
     access = ""
@@ -69,12 +72,14 @@ def SPASE_Scraper(path):
     PIDField = ""
     licenseField = ""
     datalinkField = ""
+    ReleaseDates = []
+    ReleaseDate = ""
     PI_Child = None
     priority = False
     
     # holds role values that are not considered for author var
     UnapprovedAuthors = ["MetadataContact", "ArchiveSpecialist", "HostContact", "Publisher", "User"]
-
+    
     # iterate thru ResourceHeader
     for child in targetChild:
         # find backup Dataset Name
@@ -83,6 +88,30 @@ def SPASE_Scraper(path):
             datasetName = child.text
             # record field where dataset was collected
             datasetNameField = (parent + "/ResourceHeader/ResourceName")
+        # find ReleaseDate
+        elif child.tag.endswith("ReleaseDate"):
+            date, sep, time = child.text.partition("T")
+            if "Z" in child.text:
+                time = time.replace("Z", "")
+            if "." in child.text:
+                time, sep, after = time.partition(".")
+            dt_string = date + " " + time
+            dt_obj = datetime.strptime(dt_string, "%Y-%m-%d %H:%M:%S")
+            ReleaseDates.append(dt_obj)
+        elif child.tag.endswith("RevisionHistory"):
+            RHChild = child
+            for child in RHChild:
+                REChild = child
+                for child in REChild:
+                    if child.tag.endswith("ReleaseDate"):
+                        date, sep, time = child.text.partition("T")
+                        if "Z" in child.text:
+                            time = time.replace("Z", "")
+                        if "." in child.text:
+                            time, sep, after = time.partition(".")
+                        dt_string = date + " " + time
+                        dt_obj = datetime.strptime(dt_string, "%Y-%m-%d %H:%M:%S")
+                        ReleaseDates.append(dt_obj)
         # find Description
         elif child.tag.endswith("Description"):
             desc = child.text
@@ -221,7 +250,19 @@ def SPASE_Scraper(path):
                 continue
         # continue to check for additional Access Informations
         continue
-           
+        
+    # find latest date
+    ReleaseDate = str(ReleaseDates[0])
+    if len(ReleaseDates) > 1:
+        for i in range(1, len(ReleaseDates)):
+            try:
+                (ReleaseDates[i] < ReleaseDates[i+1])
+            except IndexError:
+                if ReleaseDates[i] > ReleaseDates[0]:
+                    ReleaseDate = str(ReleaseDates[i])
+            else:
+                continue
+            
     # return stmt
     return (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, datasetNameField, 
-            desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField)
+            desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField, version, ReleaseDate)
