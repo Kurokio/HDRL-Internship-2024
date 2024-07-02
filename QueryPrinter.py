@@ -60,7 +60,7 @@ class Counts(object):
         :param criteria: A string explaining what the resulting number is for.
         :type criteria: String
         """
-        rows = execution(stmt)
+        rows = execution(stmt, 1)
         print("There are " + str(rows[0]) + " records " + criteria)
     
     # query stmts that answer analysis questions
@@ -226,12 +226,12 @@ class Counts(object):
         self.FormatPrint(self.PIDStmt, "with a persistent identifier")
         self.FormatPrint(self.descStmt, "with a description")
         self.FormatPrint(self.citationStmt, "with citation info")
-        self.FormatPrint(self.citationWOPIDStmt, "with citation info but no PID")
+        #self.FormatPrint(self.citationWOPIDStmt, "with citation info but no PID")
         self.FormatPrint(self.complianceStmt, "that meet DCAT-US3 compliance")
-        self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
+        '''self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
         self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
         self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
-        self.FormatPrint(self.allStmt, "that have all desired fields")
+        self.FormatPrint(self.allStmt, "that have all desired fields")'''
 
     def SDAC_Records(self):
         """Executes the FormatPrint function for all SQLite statements with the
@@ -302,7 +302,7 @@ class Links(Counts):
         :return: The list of SPASE records that match the tested criteria
         :rtype: list
         """
-        rows = execution(stmt)
+        rows = execution(stmt, 1)
         #print("The records " + criteria + " are:")
         #print(rows[:10])
         return rows
@@ -369,7 +369,7 @@ class Links(Counts):
         :rtype: tuple"""
 
         # prints links for all records
-        #links = self.FormatPrint(self.totalStmt, "in the database")
+        links = self.FormatPrint(self.totalStmt, "in the database")
         authors = self.FormatPrint(self.authorStmt, "with at least one author")
         publishers = self.FormatPrint(self.pubStmt, "with a publisher")
         pubYrs = self.FormatPrint(self.pubYrStmt, "with a publication year")
@@ -386,7 +386,7 @@ class Links(Counts):
         self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
         self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
         self.FormatPrint(self.allStmt, "that have all desired fields")"""
-        return (authors, publishers, pubYrs, datasetNames, licenses, urls, NASAurls, PIDs,
+        return (links, authors, publishers, pubYrs, datasetNames, licenses, urls, NASAurls, PIDs,
                 descriptions, citations, compliances)
 
     def SDAC_Records(self):
