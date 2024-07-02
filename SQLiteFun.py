@@ -8,6 +8,7 @@ add_Records: Inserts values into the Records table and returns its row number
 execution: Executes a given SQLite SELECT statement and returns the result in a list
 executionALL: Executes a given SQLite statement
 TestUpdate: Updates the given column's values in TestResults to a 1 for the records given
+databaseInfo: Prints out all table names and column names
 """
 
 import sqlite3
@@ -196,7 +197,7 @@ def add_Records(conn, entry):
     return cur.lastrowid
 
 # executes given SQLite SELECT statement
-def execution(stmt):
+def execution(stmt, number):
     """Connects to the given SQLite database, creates a cursor object, and calls the execute method 
     with the stmt argument. Calls the fetchall method to get all rows returned by the statement that 
     was executed. This also displays error messages if any arise. Lastly, it returns the results of 
@@ -215,8 +216,11 @@ def execution(stmt):
             rows = cur.fetchall()
     except sqlite3.Error as e:
         print(e)
-    return [row[0] for row in rows]
-
+    if number == 1:
+        return [row[0] for row in rows]
+    else:
+        return rows
+    
 # executes given SQLite statement
 def executionALL(stmt):
     """Connects to the given SQLite database, creates a cursor object, and calls the execute method 
@@ -264,7 +268,20 @@ def TestUpdate(records, column):
         Stmt = f""" UPDATE TestResults
                             SET '{column}' = 1
                             WHERE SPASE_id = '{record}' """
-        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""")
+        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""", 1)
         executionALL(Stmt)
         #print(f"Updated a TestResults entry with the row number {Record_id}")
         #print("===========================================================================")
+        
+def databaseInfo():
+    # print all table names and the names of their columns
+    conn = sqlite3.connect('SPASE_Data.db')
+    res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    for name in res.fetchall():
+        print("The table " + name[0] + " has columns:")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.execute(f'select * from {name[0]}')
+        row = cursor.fetchone()
+        names = row.keys()
+        print(names)
+        print()
