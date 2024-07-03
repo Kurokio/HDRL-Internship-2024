@@ -285,3 +285,48 @@ def databaseInfo():
         names = row.keys()
         print(names)
         print()
+        
+# updates the TestResults column provided for all links that fulfill a certain test so they have a 1/"True"
+def FAIRScorer(records):
+    """Iterates through the parameter records to set the value for each record in the column provided as 1.
+    For each record, a SQLite UPDATE statement is made which is then passed to the executionALL function 
+    to be executed. The rowNum of the record updated is also collected by calling the execution function.
+    
+    :param records: A list of the links that pass a specific analysis test.
+    :type records: list
+    :param column: A string of the TestResults column to be updated.
+    :type column: string
+    """
+    conn = sqlite3.connect('SPASE_Data.db')
+    # collect all column names
+    cols = execution("SELECT name FROM PRAGMA_TABLE_INFO('TestResults')", 1)
+    # get only the has_x columns
+    cols = cols[5:16]
+    for record in records:
+        score = 0
+        print(record + " is the current record")
+        
+        # calculate FAIR score value
+        i = 0
+        for col in cols:
+            # has_url not counted towards FAIR score
+            if col == "has_url":
+                print("has_url skipped!")
+                continue
+            else:
+                val = execution("SELECT " + col + f" FROM TestResults WHERE SPASE_id = '{record}' ", 1)
+                val = val[0]
+                if (1 == val):
+                    print(f"{col} had value 1, adding 1 to FAIR score")
+                    score += 1
+                else:
+                    print(f"{col} had value 0, checking next column")
+                    continue
+            i += 1
+        print(record + "has score of " + str(score) + ", updating this in the table")
+
+        # updating the columns in the table with new score and date
+        Stmt = f""" UPDATE TestResults
+                            SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
+                            WHERE SPASE_id = '{record}' """
+        executionALL(Stmt)
