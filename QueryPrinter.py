@@ -249,11 +249,11 @@ class Counts(object):
         self.FormatPrint(self.SDACPIDStmt, "with a persistent identifier published by SDAC")
         self.FormatPrint(self.SDACdescStmt, "with a description published by SDAC")
         self.FormatPrint(self.SDACcitationStmt, "with citation info published by SDAC")
-        self.FormatPrint(self.SDACcitationWOPIDStmt, "with citation info but no PID published by SDAC")
+        #self.FormatPrint(self.SDACcitationWOPIDStmt, "with citation info but no PID published by SDAC")
         self.FormatPrint(self.SDACcomplianceStmt, "that meet DCAT-US3 compliance published by SDAC")
-        self.FormatPrint(self.SDAC_AL1, "with at least one desired field published by SDAC")
-        self.FormatPrint(self.SDAC_AL2, "with at least two desired fields published by SDAC")
-        self.FormatPrint(self.SDAC_AL3, "with at least three desired fields published by SDAC")
+        #self.FormatPrint(self.SDAC_AL1, "with at least one desired field published by SDAC")
+        #self.FormatPrint(self.SDAC_AL2, "with at least two desired fields published by SDAC")
+        #self.FormatPrint(self.SDAC_AL3, "with at least three desired fields published by SDAC")
 
     def SPDF_Records(self):
         """Executes the FormatPrint function for all SQLite statements with the
