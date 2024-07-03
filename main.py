@@ -1,4 +1,4 @@
-def Create(printFlag):
+def Create(printFlag, update):
     # import functions from .py files and from built-in packages
     import pprint, sqlite3
     from SPASE_Scraper_Script import SPASE_Scraper
@@ -66,23 +66,46 @@ def Create(printFlag):
             i = 0        
             try:
                 with sqlite3.connect('SPASE_Data.db') as conn:                
+                    # add or update entry to MetadataEntries
+                    for urls in url:
+                        # add a new SPASE Record to MetadataEntries
+                        if not update:
+                            Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
+                            Record_id = add_Metadata(conn, Metadata)
+                            print(f'Created a Metadata entry with the row number {Record_id}')
+                            i += 1
+                        # update an existing SPASE record in MetadataEntries
+                        elif update:
+                            row = execution(f""" SELECT rowNum FROM MetadataEntries
+                            WHERE SPASE_id = '{RID}' AND URL = '{url[i]}' """, 1)
+                            UpdateStmt = f""" UPDATE MetadataEntries
+                            SET (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
+                                license,URL,prodKey,description,PID) = 
+                                ('{RID}','{author}','{authorRole}','{pub}','{pubYear}','{datasetName}','{license}',
+                                '{url[i]}','{prodKey[i]}','{desc}','{PID}')
+                            WHERE rowNum = '{row[0]}' """
+                            # see if any new records were added
+                            try:
+                                executionALL(UpdateStmt)
+                                print(f"Updated a MetadataEntries record with the row number '{row[0]}' ")
+                            # if there are new records added, use the add_Metadata function
+                            except IndexError:
+                                Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
+                                Record_id = add_Metadata(conn, Metadata)
+                                print(f'Created a Metadata entry with the row number {Record_id}')
+                            finally:
+                                i += 1
+                    # add a new Source record
+                    Sources = (RID,authorField,pubField,pubDateField,datasetNameField,licenseField,
+                               datalinkField,descField,PIDField)
+                    Record_id = add_Sources(conn, Sources)
+                    print(f'Created a Sources entry with row number {Record_id}')
                     # add a new Records entry
                     before, sep, after = RID.partition('NASA')
                     compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
                     entry = (RID,version,ReleaseDate,compURL)
                     Record_id = add_Records(conn, entry)
                     print(f'Created a Records entry with the row number {Record_id}')
-                    # add a new SPASE Record to MetadataEntries
-                    '''for urls in url:
-                        Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
-                        Record_id = add_Metadata(conn, Metadata)
-                        print(f'Created a Metadata entry with the row number {Record_id}')
-                        i += 1'''
-                    # add a new Source record
-                    Sources = (RID,authorField,pubField,pubDateField,datasetNameField,licenseField,
-                               datalinkField,descField,PIDField)
-                    Record_id = add_Sources(conn, Sources)
-                    print(f'Created a Sources entry with row number {Record_id}')
 
             except sqlite3.Error as e:
                 print(e)
@@ -93,20 +116,25 @@ def Create(printFlag):
             continue
             
     # collects SPASE_id's of records that answer analysis questions
-    '''testObj = Links()
+    testObj = Links()
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
      PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
+    TestResultRecords = execution("SELECT SPASE_id FROM TestResults", 1)
 
     # create the table with 0 as default for all, passing all records to the first insert call
     try:
         with sqlite3.connect('SPASE_Data.db') as conn:
-            # add a new SPASE Record
             for record in records:
-                Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
-                Record_id = add_TestResults(conn, Test)
-                print(f'Created a TestResults entry with the row number {Record_id}')
+                # if it is not a new SPASE Record
+                if record in TestResultRecords:
+                    continue
+                # if it is a new SPASE record
+                else:
+                    Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
+                    Record_id = add_TestResults(conn, Test)
+                    print(f'Created a TestResults entry with the row number {Record_id}')
 
     except sqlite3.Error as e:
                 print(e)
@@ -123,7 +151,7 @@ def Create(printFlag):
     TestUpdate(PIDRecords, "has_PID")
     TestUpdate(descriptionRecords, "has_desc")
     TestUpdate(citationRecords, "has_citation")
-    TestUpdate(complianceRecords, "has_compliance")'''
+    TestUpdate(complianceRecords, "has_compliance")
             
 def View():
     from QueryPrinter import Counts, Links
@@ -134,12 +162,13 @@ def View():
     Obj.allRecords()
     #Obj.SDAC_Records()
     #Obj.SPDF_Records()
-
-    # print SPASE_id's of records that answer analysis questions
+    
     testObj = Links()
-    (links, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
+    (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
      PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
-    return (links, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
+
+    # return SPASE_id's of records that answer analysis questions
+    return (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
      PIDRecords, descriptionRecords, citationRecords, complianceRecords)
