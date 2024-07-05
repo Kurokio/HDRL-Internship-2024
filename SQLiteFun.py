@@ -9,6 +9,7 @@ execution: Executes a given SQLite SELECT statement and returns the result in a 
 executionALL: Executes a given SQLite statement
 TestUpdate: Updates the given column's values in TestResults to a 1 for the records given
 databaseInfo: Prints out all table names and column names
+FAIRScorer: Calculates FAIR Scores for all records and updates the FAIR_Score, FAIR_ScoreDate, and MostRecent columns for each record in TestResults.
 """
 
 import sqlite3
@@ -31,7 +32,7 @@ def create_sqlite_database(filename):
             conn.close()
 
 # add table to existing db
-# Test Results holds input of a 1 or 0 depending on if record meets tested criteria
+# Test Results hOLDs input of a 1 or 0 depending on if record meets tested criteria
 
 def create_tables():
     """Connects to the given SQLite database, creates a cursor object, and calls the executescript method 
@@ -68,7 +69,7 @@ def create_tables():
         );"""
         """CREATE TABLE IF NOT EXISTS TestResults (
                 rowNum INTEGER PRIMARY KEY, 
-                SPASE_id TEXT NOT NULL UNIQUE, 
+                SPASE_id TEXT NOT NULL, 
                 FAIR_Score INTEGER,
                 FAIR_ScoreDate TEXT,
                 MostRecent TEXT,
@@ -105,13 +106,13 @@ def create_tables():
 
 # add entries/rows to table
 def add_Metadata(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placeholders to be replaced by the values 
+    """Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, author, etc. in the MetadataEntries 
     table. It finally returns the row number inserted into the table.
     
-    :param conn: A string of the SQLite database that holds the table to insert into.
+    :param conn: A string of the SQLite database that hOLDs the table to insert into.
     :type conn: String
     :param entry: A tuple of the values being inserted into the table.
     :type entry: tuple
@@ -128,13 +129,13 @@ def add_Metadata(conn, entry):
     return cur.lastrowid
 
 def add_Sources(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placeholders to be replaced by the values 
+    """Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, author_source, etc. in the 
     MetadataSources table. It finally returns the row number inserted into the table.
     
-    :param conn: A string of the SQLite database that holds the table to insert into.
+    :param conn: A string of the SQLite database that hOLDs the table to insert into.
     :type conn: String
     :param entry: A tuple of the values being inserted into the table.
     :type entry: tuple
@@ -151,13 +152,13 @@ def add_Sources(conn, entry):
     return cur.lastrowid
 
 def add_TestResults(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placeholders to be replaced by the values 
+    """Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, FAIR_Score, etc. in the 
     TestResults table. It finally returns the row number inserted into the table.
     
-    :param conn: A string of the SQLite database that holds the table to insert into.
+    :param conn: A string of the SQLite database that hOLDs the table to insert into.
     :type conn: String
     :param entry: A tuple of the values being inserted into the table.
     :type entry: tuple
@@ -286,16 +287,20 @@ def databaseInfo():
         print(names)
         print()
         
-# updates the TestResults column provided for all links that fulfill a certain test so they have a 1/"True"
-def FAIRScorer(records):
-    """Iterates through the parameter records to set the value for each record in the column provided as 1.
-    For each record, a SQLite UPDATE statement is made which is then passed to the executionALL function 
-    to be executed. The rowNum of the record updated is also collected by calling the execution function.
+# updates the TestResults column FAIRScore for all links to have their updated FAIR score
+def FAIRScorer(records, first):
+    """Iterates through the has_x column names of the TestResults table to calculate the FAIR Score of all the records in
+    the parameter. For each record, its score is printed. FAIR Score is calculated according to the algorithm described in the 
+    notebook. Once the FAIR score is calculated, the FAIR_Score, MostRecent, and FAIR_ScoreDate columns are updated for that 
+    record. If it is the first time updating the FAIR Score after default values assigned, functionality that replaces these 
+    default values before adding new rows for each subsequent FAIR Score update is provided by the 'first' parameter. If first 
+    time, drop the trigger if needed and pass True. Otherwise, pass False.
     
-    :param records: A list of the links that pass a specific analysis test.
+    :param records: A list of all the links in table.
     :type records: list
-    :param column: A string of the TestResults column to be updated.
-    :type column: string
+    :param first: A boolean indicating if this is the first time populating the TestResults table after assigning its default 
+                    values.
+    :type first: Boolean
     """
     conn = sqlite3.connect('SPASE_Data.db')
     # collect all column names
@@ -304,29 +309,81 @@ def FAIRScorer(records):
     cols = cols[5:16]
     for record in records:
         score = 0
-        print(record + " is the current record")
+        #print(record + " is the current record")
         
         # calculate FAIR score value
         i = 0
         for col in cols:
             # has_url not counted towards FAIR score
             if col == "has_url":
-                print("has_url skipped!")
+                #print("has_url skipped!")
                 continue
             else:
                 val = execution("SELECT " + col + f" FROM TestResults WHERE SPASE_id = '{record}' ", 1)
                 val = val[0]
                 if (1 == val):
-                    print(f"{col} had value 1, adding 1 to FAIR score")
+                    #print(f"{col} had value 1, adding 1 to FAIR score")
                     score += 1
                 else:
-                    print(f"{col} had value 0, checking next column")
+                    #print(f"{col} had value 0, checking next column")
                     continue
             i += 1
-        print(record + "has score of " + str(score) + ", updating this in the table")
+        print(record + " has score of " + str(score) + ", updating this in the table")
+        
+        # if not first time running after default values assigned by main function
+        if not first:
+            # create the trigger that makes a new row for the out of date entry after updating
+            Stmt = """ CREATE TRIGGER IF NOT EXISTS FAIR_Update
+                        AFTER UPDATE ON TestResults
+                        WHEN ((OLD.SPASE_id = NEW.SPASE_id)
+                            AND (OLD.FAIR_Score != NEW.FAIR_Score))
+                        BEGIN
+                            INSERT INTO TestResults (
+                                SPASE_id, 
+                                FAIR_Score,
+                                FAIR_ScoreDate,
+                                MostRecent,
+                                has_author,
+                                has_pub,
+                                has_pubYr,
+                                has_datasetName,
+                                has_license,
+                                has_url,
+                                has_NASAurl,
+                                has_PID,
+                                has_desc,
+                                has_citation,
+                                has_compliance,
+                                Errors)
+                        VALUES (
+                                OLD.SPASE_id, 
+                                OLD.FAIR_Score,
+                                OLD.FAIR_ScoreDate,
+                                'F',
+                                OLD.has_author,
+                                OLD.has_pub,
+                                OLD.has_pubYr,
+                                OLD.has_datasetName,
+                                OLD.has_license,
+                                OLD.has_url,
+                                OLD.has_NASAurl,
+                                OLD.has_PID,
+                                OLD.has_desc,
+                                OLD.has_citation,
+                                OLD.has_compliance,
+                                OLD.Errors);
+                        END;"""
+            executionALL(Stmt)
 
-        # updating the columns in the table with new score and date
-        Stmt = f""" UPDATE TestResults
-                            SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
-                            WHERE SPASE_id = '{record}' """
-        executionALL(Stmt)
+            # updating the columns in the table with new score and date
+            Stmt = f""" UPDATE TestResults
+                                SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
+                                WHERE SPASE_id = '{record}' """
+            executionALL(Stmt)
+        # if first time running after default values assigned in main function
+        else:
+            # updating the columns in the table with new score and date
+            Stmt = f""" UPDATE TestResults
+                                SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
+                                WHERE SPASE_id = '{record}' """
+            executionALL(Stmt)
