@@ -1,4 +1,13 @@
 def Create(printFlag, update):
+    """Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
+    MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. Populates the 
+    TestResult table with default values to be overwritten by the call to the FAIRScorer function in the notebook.
+    
+    :param printFlag: A boolean determining if the user wants to print more details of what the function is doing.
+    :type conn: Boolean
+    :param update: A boolean determining if updating the MetadataEntries table or not
+    :type entry: Boolean
+    """
     # import functions from .py files and from built-in packages
     import pprint, sqlite3
     from SPASE_Scraper_Script import SPASE_Scraper
@@ -20,10 +29,13 @@ def Create(printFlag, update):
         print("The number of records is "+ str(len(SPASE_paths)))
         print("The SPASE records found are:")
         print(SPASE_paths)
-    print("======================================================================================================")
+        print("======================================================================================================")
 
     # list that holds SPASE records already checked
     searched = []
+    
+    # loop counter
+    j = 0
 
     # iterate through all SPASE records returned by PathGrabber
     for record in SPASE_paths:
@@ -72,7 +84,10 @@ def Create(printFlag, update):
                         if not update:
                             Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
                             Record_id = add_Metadata(conn, Metadata)
-                            print(f'Created a Metadata entry with the row number {Record_id}')
+                            if printFlag:
+                                print(f'Created a Metadata entry with the row number {Record_id}')
+                            elif j == 0:
+                                print("Creating Metadata entries")
                             i += 1
                         # update an existing SPASE record in MetadataEntries
                         elif update:
@@ -87,33 +102,45 @@ def Create(printFlag, update):
                             # see if any new records were added
                             try:
                                 executionALL(UpdateStmt)
-                                print(f"Updated a MetadataEntries record with the row number '{row[0]}' ")
+                                if printFlag:
+                                    print(f"Updated a MetadataEntries record with the row number '{row[0]}' ")
+                                elif j == 0:
+                                    print("Updating Metadata entries")
                             # if there are new records added, use the add_Metadata function
                             except IndexError:
                                 Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
                                 Record_id = add_Metadata(conn, Metadata)
-                                print(f'Created a Metadata entry with the row number {Record_id}')
+                                if printFlag:
+                                    print(f'Created a Metadata entry with the row number {Record_id}')
                             finally:
                                 i += 1
                     # add a new Source record
                     Sources = (RID,authorField,pubField,pubDateField,datasetNameField,licenseField,
                                datalinkField,descField,PIDField)
                     Record_id = add_Sources(conn, Sources)
-                    print(f'Created a Sources entry with row number {Record_id}')
+                    if printFlag:
+                        print(f'Created a Sources entry with row number {Record_id}')
+                    elif j == 0:
+                        print("Creating Sources entries")
                     # add a new Records entry
                     before, sep, after = RID.partition('NASA')
                     compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
                     entry = (RID,version,ReleaseDate,compURL)
                     Record_id = add_Records(conn, entry)
-                    print(f'Created a Records entry with the row number {Record_id}')
+                    if printFlag:
+                        print(f'Created a Records entry with the row number {Record_id}')
+                    elif j == 0:
+                        print("Creating Records entries")
 
             except sqlite3.Error as e:
                 print(e)
 
-            print("======================================================================================================")
+            if printFlag:
+                print("======================================================================================================")
 
         else:
             continue
+        j += 1
             
     # collects SPASE_id's of records that answer analysis questions
     testObj = Links()
@@ -121,11 +148,12 @@ def Create(printFlag, update):
      PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
-    TestResultRecords = execution("SELECT SPASE_id FROM TestResults", 1)
+    TestResultRecords = execution("SELECT DISTINCT(SPASE_id) FROM TestResults", 1)
 
     # create the table with 0 as default for all, passing all records to the first insert call
     try:
         with sqlite3.connect('SPASE_Data.db') as conn:
+            k = 0
             for record in records:
                 # if it is not a new SPASE Record
                 if record in TestResultRecords:
@@ -134,28 +162,38 @@ def Create(printFlag, update):
                 else:
                     Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
                     Record_id = add_TestResults(conn, Test)
-                    print(f'Created a TestResults entry with the row number {Record_id}')
+                    if printFlag:
+                        print(f'Created a TestResults entry with the row number {Record_id}')
+                    elif k == 0:
+                        print("Creating TestResults entries")
+                k += 1
 
     except sqlite3.Error as e:
                 print(e)
 
     # iterate thru lists one by one and update column for each record if in the list (if record in author, has_author = 1)
     # UPDATE stmt for each test
-    TestUpdate(authorRecords, "has_author")    
-    TestUpdate(pubRecords, "has_pub")
-    TestUpdate(pubYrRecords, "has_pubYr")
-    TestUpdate(datasetNameRecords, "has_datasetName")
-    TestUpdate(licenseRecords, "has_license")
-    TestUpdate(urlRecords, "has_url")
-    TestUpdate(NASAurlRecords, "has_NASAurl")
-    TestUpdate(PIDRecords, "has_PID")
-    TestUpdate(descriptionRecords, "has_desc")
-    TestUpdate(citationRecords, "has_citation")
-    TestUpdate(complianceRecords, "has_compliance")
-            
+    if len(records) != len(TestResultRecords):
+        TestUpdate(authorRecords, "has_author")    
+        TestUpdate(pubRecords, "has_pub")
+        TestUpdate(pubYrRecords, "has_pubYr")
+        TestUpdate(datasetNameRecords, "has_datasetName")
+        TestUpdate(licenseRecords, "has_license")
+        TestUpdate(urlRecords, "has_url")
+        TestUpdate(NASAurlRecords, "has_NASAurl")
+        TestUpdate(PIDRecords, "has_PID")
+        TestUpdate(descriptionRecords, "has_desc")
+        TestUpdate(citationRecords, "has_citation")
+        TestUpdate(complianceRecords, "has_compliance")
+    
 def View():
+    """Creates Counts and Links objects to print the number of records that meet each test criteria as well as return those links 
+    to the caller in the form of a tuple.
+    
+    :return: A tuple containing lists of all records that fulfill certain test criteria.
+    :rtype: tuple
+    """
     from QueryPrinter import Counts, Links
-    import sqlite3
     
     # print counts of SPASE records that answer analysis questions
     Obj = Counts()
