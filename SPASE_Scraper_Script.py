@@ -130,18 +130,18 @@ def SPASE_Scraper(path):
             for child in C_Child:
                 # find PersonID
                 if child.tag.endswith("PersonID"):
-                    # store PID
-                    PID = child.text
+                    # store PersonID
+                    PersonID = child.text
                 # find Role
                 elif child.tag.endswith("Role"):
                     # backup author
                     if ("PrincipalInvestigator" or "PI") in child.text:
                         # if a lesser priority author found first, overwrite author lists
                         if not priority and author:
-                            author = [PID]
+                            author = [PersonID]
                             authorRole = [child.text]
                         else:
-                            author.append(PID)
+                            author.append(PersonID)
                             authorRole.append(child.text)
                         # record field where author was collected
                         authorField = (parent + "/ResourceHeader/Contact/PersonID")
@@ -156,7 +156,7 @@ def SPASE_Scraper(path):
                     elif child.text not in UnapprovedAuthors:
                         # checks if higher priority author (PI) was added first
                         if not priority:
-                            author.append(PID)
+                            author.append(PersonID)
                             authorRole.append(child.text)
                             # record field where author was collected
                             authorField = (parent + "/ResourceHeader/Contact/PersonID")
