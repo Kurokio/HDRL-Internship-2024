@@ -1,6 +1,7 @@
-def Create(printFlag, update):
-    """Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
-    MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. Populates the 
+def Create(printFlag = False, update = True):
+    """
+    Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
+    MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. Populates the\
     TestResult table with default values to be overwritten by the call to the FAIRScorer function in the notebook.
     
     :param printFlag: A boolean determining if the user wants to print more details of what the function is doing.
@@ -187,7 +188,8 @@ def Create(printFlag, update):
         TestUpdate(complianceRecords, "has_compliance")
     
 def View():
-    """Creates Counts and Links objects to print the number of records that meet each test criteria as well as return those links 
+    """
+    Creates Counts and Links objects to print the number of records that meet each test criteria as well as return those links \
     to the caller in the form of a tuple.
     
     :return: A tuple containing lists of all records that fulfill certain test criteria.
