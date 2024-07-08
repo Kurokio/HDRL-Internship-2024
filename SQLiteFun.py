@@ -41,7 +41,7 @@ def create_tables():
     with the sql_statements argument. These changes are then committed which creates the MetadataEntries, 
     MetadataSources, TestResults, and Records tables in the specified database. This also displays error 
     messages if any arise."""
-    
+
     sql_statements = (
         """CREATE TABLE IF NOT EXISTS MetadataEntries (
                 rowNum INTEGER PRIMARY KEY, 
@@ -55,7 +55,8 @@ def create_tables():
                 URL TEXT,
                 prodKey TEXT,
                 description TEXT,
-                PID TEXT
+                PID TEXT,
+                UNIQUE(SPASE_id, URL, prodKey)
         );""",
         """CREATE TABLE IF NOT EXISTS MetadataSources (
                 rowNum INTEGER PRIMARY KEY, 
