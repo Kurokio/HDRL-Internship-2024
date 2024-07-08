@@ -4,7 +4,7 @@ needs to do is navigate to the for loop that iterates through the children of th
 elif statement to check the child.tags for the desired field. Once that tag is found, store its text
 into a variable to be returned by the function. If there are multiple authors, make the return variables lists
 and append the role values to the roles list in the same order you append the author names to their list. 
-Further edits would need to be made to the SPASE_Analysis notebook, create_tables and add_TableName methods 
+Further edits would need to be made to the main.py file, create_tables and add_TableName methods 
 in SQLiteFun, and the SQLite query statements in the QueryPrinter file to address the new return."""
 
 def SPASE_Scraper(path):
@@ -56,6 +56,7 @@ def SPASE_Scraper(path):
     # obtain Author, Publication Date, Publisher, Persistent Identifier, Description, ReleaseDate, and Dataset Name
 
     # define vars
+    # Code A can go here
     access = ""
     author= []
     authorField = ""
@@ -132,6 +133,9 @@ def SPASE_Scraper(path):
                 if child.tag.endswith("PersonID"):
                     # store PersonID
                     PersonID = child.text
+                    
+                # Code B can go here
+                
                 # find Role
                 elif child.tag.endswith("Role"):
                     # backup author
@@ -140,9 +144,11 @@ def SPASE_Scraper(path):
                         if not priority and author:
                             author = [PersonID]
                             authorRole = [child.text]
+                            # Code C here
                         else:
                             author.append(PersonID)
                             authorRole.append(child.text)
+                            # Code D here
                         # record field where author was collected
                         authorField = (parent + "/ResourceHeader/Contact/PersonID")
                         # mark that highest priority backup author was found
@@ -158,6 +164,7 @@ def SPASE_Scraper(path):
                         if not priority:
                             author.append(PersonID)
                             authorRole.append(child.text)
+                            # Code D here
                             # record field where author was collected
                             authorField = (parent + "/ResourceHeader/Contact/PersonID")
 
