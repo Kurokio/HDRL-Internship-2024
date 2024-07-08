@@ -15,7 +15,8 @@ FAIRScorer: Calculates FAIR Scores for all records and updates the FAIR_Score, F
 import sqlite3
 
 def create_sqlite_database(filename):
-    """Creates a database connection to a new SQLite database with the name provided. This also tells
+    """
+    Creates a database connection to a new SQLite database with the name provided. This also tells
     you the SQLite version as well as any errors that may occur.
     
     :param filename: String that contains the desired name of the database
@@ -35,7 +36,8 @@ def create_sqlite_database(filename):
 # Test Results hOLDs input of a 1 or 0 depending on if record meets tested criteria
 
 def create_tables():
-    """Connects to the given SQLite database, creates a cursor object, and calls the executescript method 
+    """
+    Connects to the given SQLite database, creates a cursor object, and calls the executescript method 
     with the sql_statements argument. These changes are then committed which creates the MetadataEntries, 
     MetadataSources, TestResults, and Records tables in the specified database. This also displays error 
     messages if any arise."""
@@ -106,7 +108,8 @@ def create_tables():
 
 # add entries/rows to table
 def add_Metadata(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
+    """
+    Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, author, etc. in the MetadataEntries 
@@ -129,7 +132,8 @@ def add_Metadata(conn, entry):
     return cur.lastrowid
 
 def add_Sources(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
+    """
+    Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, author_source, etc. in the 
@@ -152,7 +156,8 @@ def add_Sources(conn, entry):
     return cur.lastrowid
 
 def add_TestResults(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
+    """
+    Initializes a SQLite INSERT statement with ? serving as placehOLDers to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, FAIR_Score, etc. in the 
@@ -176,7 +181,8 @@ def add_TestResults(conn, entry):
     return cur.lastrowid
 
 def add_Records(conn, entry):
-    """Initializes a SQLite INSERT statement with ? serving as placeholders to be replaced by the values 
+    """
+    Initializes a SQLite INSERT statement with ? serving as placeholders to be replaced by the values 
     specified in the entry parameter. Connects to the given SQLite database, creates a cursor object, 
     and calls the execute method with the sql and entry arguments. These changes are then committed which 
     inserts the values provided into the fields specified such as SPASE_id, SPASE_Version, etc. in the 
@@ -198,8 +204,9 @@ def add_Records(conn, entry):
     return cur.lastrowid
 
 # executes given SQLite SELECT statement
-def execution(stmt, number):
-    """Connects to the given SQLite database, creates a cursor object, and calls the execute method 
+def execution(stmt, number = 1):
+    """
+    Connects to the given SQLite database, creates a cursor object, and calls the execute method 
     with the stmt argument. Calls the fetchall method to get all rows returned by the statement that 
     was executed. This also displays error messages if any arise. Lastly, it returns the results of 
     the SQLite statement in a list
@@ -224,7 +231,8 @@ def execution(stmt, number):
     
 # executes given SQLite statement
 def executionALL(stmt):
-    """Connects to the given SQLite database, creates a cursor object, and calls the execute method 
+    """
+    Connects to the given SQLite database, creates a cursor object, and calls the execute method 
     with the stmt argument. This also displays error messages if any arise.
     
     :param stmt: A string of the SQLite statement to be executed.
@@ -255,7 +263,8 @@ def SDAC_records(yr):
         
 # updates the TestResults column provided for all links that fulfill a certain test so they have a 1/"True"
 def TestUpdate(records, column):
-    """Iterates through the parameter records to set the value for each record in the column provided as 1.
+    """
+    Iterates through the parameter records to set the value for each record in the column provided as 1.
     For each record, a SQLite UPDATE statement is made which is then passed to the executionALL function 
     to be executed. The rowNum of the record updated is also collected by calling the execution function.
     
@@ -275,6 +284,9 @@ def TestUpdate(records, column):
         #print("===========================================================================")
         
 def databaseInfo():
+    """
+    Prints all table names and all the names of their associated columns
+    """
     # print all table names and the names of their columns
     conn = sqlite3.connect('SPASE_Data.db')
     res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
@@ -288,12 +300,13 @@ def databaseInfo():
         print()
         
 # updates the TestResults column FAIRScore for all links to have their updated FAIR score
-def FAIRScorer(records, first):
-    """Iterates through the has_x column names of the TestResults table to calculate the FAIR Score of all the records in
-    the parameter. For each record, its score is printed. FAIR Score is calculated according to the algorithm described in the 
-    notebook. Once the FAIR score is calculated, the FAIR_Score, MostRecent, and FAIR_ScoreDate columns are updated for that 
-    record. If it is the first time updating the FAIR Score after default values assigned, functionality that replaces these 
-    default values before adding new rows for each subsequent FAIR Score update is provided by the 'first' parameter. If first 
+def FAIRScorer(records, first = False):
+    """
+    Iterates through the has_x column names of the TestResults table to calculate the FAIR Score of all the records in
+    the parameter. For each record, its score is printed. FAIR Score is calculated according to the algorithm described in the\
+    notebook. Once the FAIR score is calculated, the FAIR_Score, MostRecent, and FAIR_ScoreDate columns are updated for that \
+    record. If it is the first time updating the FAIR Score after default values assigned, functionality that replaces these \
+    default values before adding new rows for each subsequent FAIR Score update is provided by the 'first' parameter. If first \
     time, drop the trigger if needed and pass True. Otherwise, pass False.
     
     :param records: A list of all the links in table.
