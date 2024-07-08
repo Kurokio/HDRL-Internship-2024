@@ -1,4 +1,4 @@
-def Create(printFlag = False, update = True):
+def Create(printFlag = False):
     """
     Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
     MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. Populates the\
@@ -81,7 +81,42 @@ def Create(printFlag = False, update = True):
                 with sqlite3.connect('SPASE_Data.db') as conn:                
                     # add or update entry to MetadataEntries
                     for urls in url:
-                        # add a new SPASE Record to MetadataEntries
+                        '''# add a new or update an existing SPASE record in MetadataEntries
+                        row = execution(f""" SELECT rowNum FROM MetadataEntries2
+                            WHERE SPASE_id = '{RID}' AND URL = '{url[i]}' """, 1)
+                        # print if adding new entry
+                        if not row:
+                            if printFlag:
+                                print(f"Created a Metadata entry with the row number '{row[0]}'")
+                            elif j == 0:
+                                print("Creating Metadata entries")
+                        # print that updating an existing entry
+                        else:
+                            if printFlag:
+                                print(f"Updated a MetadataEntries record with the row number '{row[0]}' ")
+                            elif j == 0:
+                                print("Updating Metadata entries")'''
+                        
+                        UpdateStmt = f""" INSERT INTO MetadataEntries2
+                                            (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
+                                            license,URL,prodKey,description,PID)
+                                        VALUES ('{RID}','{author}','{authorRole}','{pub}','{pubYear}',
+                                        '{datasetName}','{license}','{url[i]}','{prodKey[i]}','{desc}','{PID}')
+                                        ON CONFLICT (SPASE_id, URL, prodKey) DO
+                                        UPDATE
+                                        SET
+                                            author = excluded.author,
+                                            authorRole = excluded.authorRole,
+                                            publisher = excluded.publisher,
+                                            publicationYr = excluded.publicationYr,
+                                            datasetName = excluded.datasetName,
+                                            license = excluded.license,
+                                            description = excluded.description,
+                                            PID = excluded.PID """
+                        executionALL(UpdateStmt)
+                        i += 1
+                        
+                        '''# add a new SPASE Record to MetadataEntries
                         if not update:
                             Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
                             Record_id = add_Metadata(conn, Metadata)
@@ -114,7 +149,7 @@ def Create(printFlag = False, update = True):
                                 if printFlag:
                                     print(f'Created a Metadata entry with the row number {Record_id}')
                             finally:
-                                i += 1
+                                i += 1'''
                     # add a new Source record
                     Sources = (RID,authorField,pubField,pubDateField,datasetNameField,licenseField,
                                datalinkField,descField,PIDField)
