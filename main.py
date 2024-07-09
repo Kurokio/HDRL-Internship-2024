@@ -97,11 +97,11 @@ def Create(printFlag = False):
                             elif j == 0:
                                 print("Updating Metadata entries")'''
                         
-                        UpdateStmt = f""" INSERT INTO MetadataEntries
+                        UpdateStmt = f''' INSERT INTO MetadataEntries
                                             (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
                                             license,URL,prodKey,description,PID)
-                                        VALUES ('{RID}','{author}','{authorRole}','{pub}','{pubYear}',
-                                        '{datasetName}','{license}','{url[i]}','{prodKey[i]}','{desc}','{PID}')
+                                        VALUES ("{RID}","{author}","{authorRole}","{pub}","{pubYear}",
+                                        "{datasetName}","{license}","{url[i]}","{prodKey[i]}","description found","{PID}")
                                         ON CONFLICT (SPASE_id, URL, prodKey) DO
                                         UPDATE
                                         SET
@@ -112,7 +112,7 @@ def Create(printFlag = False):
                                             datasetName = excluded.datasetName,
                                             license = excluded.license,
                                             description = excluded.description,
-                                            PID = excluded.PID; """
+                                            PID = excluded.PID; '''
                         if printFlag:
                             print(f"'{url[i]}' was assigned to URL")
                             print(f"'{prodKey[i]}' was assigned to prodKey")
