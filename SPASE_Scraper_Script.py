@@ -44,12 +44,12 @@ def SPASE_Scraper(path):
     for child in root[1]:
         if child.tag.endswith("ResourceID"):
             # collect ResourceID
-            RID = child.text
+            ResourceID = child.text
             # use partition to get just the NumericalData or DisplayData text
             before, sep, after = root[1].tag.partition("}")
             parent, sep, after = after.partition("'")
-            # record field where RID was collected
-            RIDField = (parent + "/ResourceID")
+            # record field where ResourceID was collected
+            ResourceIDField = (parent + "/ResourceID")
         elif child.tag.endswith("ResourceHeader"):
             targetChild = child
 
@@ -271,5 +271,5 @@ def SPASE_Scraper(path):
                 continue
             
     # return stmt
-    return (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, datasetNameField, 
-            desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField, version, ReleaseDate)
+    return (ResourceID, ResourceIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName,
+            datasetNameField, desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField, version, ReleaseDate)
