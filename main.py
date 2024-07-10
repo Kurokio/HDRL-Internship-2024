@@ -8,6 +8,7 @@ def Create(printFlag = False):
     :type conn: Boolean
     :param update: A boolean determining if updating the MetadataEntries table or not
     :type entry: Boolean
+    :return: None
     """
     # import functions from .py files and from built-in packages
     import pprint, sqlite3
@@ -34,20 +35,17 @@ def Create(printFlag = False):
 
     # list that holds SPASE records already checked
     searched = []
-    
-    # loop counter
-    j = 0
 
     # iterate through all SPASE records returned by PathGrabber
     for record in SPASE_paths:
         # scrape metadata for each record
         if record not in searched:
-            (RID, RIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, 
+            (ResourceID, ResourceIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, 
              datasetNameField, desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField, 
              version, ReleaseDate) = SPASE_Scraper(record)
 
             # list that holds required fields
-            # required = [RID, description, author, authorRole, url]
+            # required = [ResourceID, description, author, authorRole, url]
 
             # add record to searched
             searched.append(record)
@@ -58,7 +56,7 @@ def Create(printFlag = False):
             authorRole = ", ".join(authorRole)
 
             if printFlag:
-                print("The ResourceID is " + RID + " which was obtained from " + RIDField)
+                print("The ResourceID is " + ResourceID + " which was obtained from " + ResourceIDField)
                 print("The author(s) are " + author + " who are " + authorRole + " which was obtained from " + authorField)
                 print("The publication year is " + pubYear + " which was obtained from " + pubDateField)
                 print("The publisher is " + pub + " which was obtained from " + pubField)
@@ -83,7 +81,7 @@ def Create(printFlag = False):
                     for urls in url:
                         '''# add a new or update an existing SPASE record in MetadataEntries
                         row = execution(f""" SELECT rowNum FROM MetadataEntries2
-                            WHERE SPASE_id = '{RID}' AND URL = '{url[i]}' """, 1)
+                            WHERE SPASE_id = '{ResourceID}' AND URL = '{url[i]}' """, 1)
                         # print if adding new entry
                         if not row:
                             if printFlag:
@@ -100,7 +98,7 @@ def Create(printFlag = False):
                         UpdateStmt = f''' INSERT INTO MetadataEntries
                                             (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
                                             license,URL,prodKey,description,PID)
-                                        VALUES ("{RID}","{author}","{authorRole}","{pub}","{pubYear}",
+                                        VALUES ("{ResourceID}","{author}","{authorRole}","{pub}","{pubYear}",
                                         "{datasetName}","{license}","{url[i]}","{prodKey[i]}","description found","{PID}")
                                         ON CONFLICT (SPASE_id, URL, prodKey) DO
                                         UPDATE
@@ -121,7 +119,7 @@ def Create(printFlag = False):
                         
                         '''# add a new SPASE Record to MetadataEntries
                         if not update:
-                            Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
+                            Metadata = (ResourceID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
                             Record_id = add_Metadata(conn, Metadata)
                             if printFlag:
                                 print(f'Created a Metadata entry with the row number {Record_id}')
@@ -131,11 +129,11 @@ def Create(printFlag = False):
                         # update an existing SPASE record in MetadataEntries
                         elif update:
                             row = execution(f""" SELECT rowNum FROM MetadataEntries
-                            WHERE SPASE_id = '{RID}' AND URL = '{url[i]}' """, 1)
+                            WHERE SPASE_id = '{ResourceID}' AND URL = '{url[i]}' """, 1)
                             UpdateStmt = f""" UPDATE MetadataEntries
                             SET (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
                                 license,URL,prodKey,description,PID) = 
-                                ('{RID}','{author}','{authorRole}','{pub}','{pubYear}','{datasetName}','{license}',
+                                ('{ResourceID}','{author}','{authorRole}','{pub}','{pubYear}','{datasetName}','{license}',
                                 '{url[i]}','{prodKey[i]}','{desc}','{PID}')
                             WHERE rowNum = '{row[0]}' """
                             # see if any new records were added
@@ -147,30 +145,27 @@ def Create(printFlag = False):
                                     print("Updating Metadata entries")
                             # if there are new records added, use the add_Metadata function
                             except IndexError:
-                                Metadata = (RID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
+                                Metadata = (ResourceID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
                                 Record_id = add_Metadata(conn, Metadata)
                                 if printFlag:
                                     print(f'Created a Metadata entry with the row number {Record_id}')
                             finally:
                                 i += 1'''
                     # add a new Source record
-                    Sources = (RID,authorField,pubField,pubDateField,datasetNameField,licenseField,
+                    Sources = (ResourceID,authorField,pubField,pubDateField,datasetNameField,licenseField,
                                datalinkField,descField,PIDField)
                     Record_id = add_Sources(conn, Sources)
                     if printFlag:
                         print(f'Created a Sources entry with row number {Record_id}')
-                    elif j == 0:
-                        print("Creating Sources entries")
                     # add a new Records entry
-                    before, sep, after = RID.partition('NASA')
+                    before, sep, after = ResourceID.partition('NASA')
                     compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
-                    entry = (RID,version,ReleaseDate,compURL)
+                    entry = (ResourceID,version,ReleaseDate,compURL)
                     Record_id = add_Records(conn, entry)
                     if printFlag:
                         print(f'Created a Records entry with the row number {Record_id}')
-                    elif j == 0:
-                        print("Creating Records entries")
 
+            # errors with 'UNIQUE CONSTRAINT Failed' are intentional and prevent duplicate records being added to MetadataSources
             except sqlite3.Error as e:
                 print(e)
 
