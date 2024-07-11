@@ -60,7 +60,7 @@ class Counts(object):
         :param criteria: A string explaining what the resulting number is for.
         :type criteria: String
         """
-        rows = execution(stmt, 1)
+        rows = execution(stmt)
         print("There are " + str(rows[0]) + " records " + criteria)
     
     # query stmts that answer analysis questions
@@ -302,7 +302,7 @@ class Links(Counts):
         :return: The list of SPASE records that match the tested criteria
         :rtype: list
         """
-        rows = execution(stmt, 1)
+        rows = execution(stmt)
         #print("The records " + criteria + " are:")
         #print(rows[:10])
         return rows
@@ -380,14 +380,14 @@ class Links(Counts):
         PIDs = self.FormatPrint(self.PIDStmt, "with a persistent identifier")
         descriptions = self.FormatPrint(self.descStmt, "with a description")
         citations = self.FormatPrint(self.citationStmt, "with citation info")
-        '''self.FormatPrint(self.citationWOPIDStmt, "with citation info but no PID")'''
+        citeWOPIDs = self.FormatPrint(self.citationWOPIDStmt, "with citation info but no PID")
         compliances = self.FormatPrint(self.complianceStmt, "that meet DCAT-US3 compliance")
-        """self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
-        self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
-        self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
-        self.FormatPrint(self.allStmt, "that have all desired fields")"""
+        AL1 = self.FormatPrint(self.AL1Stmt, "that have at least one desired field")
+        AL2 = self.FormatPrint(self.AL2Stmt, "that have at least two desired fields")
+        AL3 = self.FormatPrint(self.AL3Stmt, "that have at least three desired fields")
+        ALL = self.FormatPrint(self.allStmt, "that have all desired fields")
         return (links, authors, publishers, pubYrs, datasetNames, licenses, urls, NASAurls, PIDs,
-                descriptions, citations, compliances)
+                descriptions, citations, compliances, citeWOPIDs, AL1, AL2, AL3, ALL)
 
     def SDAC_Records(self):
         """Executes the FormatPrint function for all SQLite statements with the
