@@ -92,7 +92,7 @@ def create_tables():
         """CREATE TABLE IF NOT EXISTS Records (
                 rowNum INTEGER PRIMARY KEY, 
                 SPASE_id TEXT NOT NULL UNIQUE, 
-                SPASE_Version INTEGER,
+                SPASE_Version TEXT,
                 LastModified TEXT,
                 SPASE_URL TEXT
         );""")
@@ -205,15 +205,18 @@ def add_Records(conn, entry):
     return cur.lastrowid
 
 # executes given SQLite SELECT statement
-def execution(stmt, number = 1):
+def execution(stmt, number = "single"):
     """
     Connects to the given SQLite database, creates a cursor object, and calls the execute method 
-    with the stmt argument. Calls the fetchall method to get all rows returned by the statement that 
-    was executed. This also displays error messages if any arise. Lastly, it returns the results of 
-    the SQLite statement in a list
+    with the stmt argument. The number argument has default value of single, which will format the return correctly when selecting
+    only one item. Otherwise pass 'multiple' as the argument when selecting more than one item. Calls the fetchall method to get
+    all rows returned by the statement that was executed. This also displays error messages if any arise. Lastly, it returns the
+    values of the matching items from the SQLite SELECT statement in a list.
     
     :param stmt: A string of the SQLite statement to be executed.
     :type stmt: String
+    :param number: An string that formats the return based on how many items are being selected
+    :type number: String
     :return: The list of the results from the SQLite statement
     :rtype: list
     """
@@ -225,9 +228,9 @@ def execution(stmt, number = 1):
             rows = cur.fetchall()
     except sqlite3.Error as e:
         print(e)
-    if number == 1:
+    if number == "single":
         return [row[0] for row in rows]
-    else:
+    elif number == "multiple":
         return rows
     
 # executes given SQLite statement
@@ -279,7 +282,7 @@ def TestUpdate(records, column):
         Stmt = f""" UPDATE TestResults
                             SET '{column}' = 1
                             WHERE SPASE_id = '{record}' """
-        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""", 1)
+        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""")
         executionALL(Stmt)
         #print(f"Updated a TestResults entry with the row number {Record_id}")
         #print("===========================================================================")
@@ -301,25 +304,20 @@ def databaseInfo():
         print()
         
 # updates the TestResults column FAIRScore for all links to have their updated FAIR score
-def FAIRScorer(records, first = False):
+def FAIRScorer(records):
     """
     Iterates through the has_x column names of the TestResults table to calculate the FAIR Score of all the records in
-    the parameter. For each record, its score is printed. FAIR Score is calculated according to the algorithm described in the\
-    notebook. Once the FAIR score is calculated, the FAIR_Score, MostRecent, and FAIR_ScoreDate columns are updated for that \
-    record. If it is the first time updating the FAIR Score after default values assigned, functionality that replaces these \
-    default values before adding new rows for each subsequent FAIR Score update is provided by the 'first' parameter. If first \
-    time, drop the trigger if needed and pass True. Otherwise, pass False.
+    the parameter. FAIR Score is calculated according to the algorithm described in the notebook. Once the FAIR score is 
+    calculated, the FAIR_Score, MostRecent, and FAIR_ScoreDate columns are updated for that record.
     
     :param records: A list of all the links in table.
     :type records: list
-    :param first: A boolean indicating if this is the first time populating the TestResults table after assigning its default 
-                    values.
-    :type first: Boolean
     """
     conn = sqlite3.connect('SPASE_Data.db')
     # collect all column names
-    cols = execution("SELECT name FROM PRAGMA_TABLE_INFO('TestResults')", 1)
+    cols = execution("SELECT name FROM PRAGMA_TABLE_INFO('TestResults')")
     # get only the has_x columns
+    FAIR_Date = cols[3]
     cols = cols[5:16]
     for record in records:
         score = 0
@@ -333,7 +331,7 @@ def FAIRScorer(records, first = False):
                 #print("has_url skipped!")
                 continue
             else:
-                val = execution("SELECT " + col + f" FROM TestResults WHERE SPASE_id = '{record}' ", 1)
+                val = execution("SELECT " + col + f" FROM TestResults WHERE SPASE_id = '{record}' ")
                 val = val[0]
                 if (1 == val):
                     #print(f"{col} had value 1, adding 1 to FAIR score")
@@ -342,10 +340,14 @@ def FAIRScorer(records, first = False):
                     #print(f"{col} had value 0, checking next column")
                     continue
             i += 1
-        print(record + " has score of " + str(score) + ", updating this in the table")
+        #print(record + " has score of " + str(score) + ", updating this in the table")
         
-        # if not first time running after default values assigned by main function
-        if not first:
+        # get value of FAIR_ScoreDate
+        DateVal = execution("SELECT " + FAIR_Date + f" FROM TestResults WHERE SPASE_id = '{record}' ")
+        DateVal = DateVal[0]
+        
+        # if FAIR_ScoreDate nonempty = not first time record was passed after default values assigned by main function
+        if DateVal:
             # create the trigger that makes a new row for the out of date entry after updating
             Stmt = """ CREATE TRIGGER IF NOT EXISTS FAIR_Update
                         AFTER UPDATE ON TestResults
@@ -394,8 +396,11 @@ def FAIRScorer(records, first = False):
                                 SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
                                 WHERE SPASE_id = '{record}' """
             executionALL(Stmt)
-        # if first time running after default values assigned in main function
-        else:
+        # if FAIR_ScoreDate is empty = first time running after default values assigned in main function
+        # replace default value row with fully populated row
+        elif not DateVal:
+            # drop trigger that makes new rows
+            executionALL("DROP TRIGGER IF EXISTS FAIR_Update")
             # updating the columns in the table with new score and date
             Stmt = f""" UPDATE TestResults
                                 SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
