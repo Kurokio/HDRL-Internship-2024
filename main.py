@@ -1,13 +1,13 @@
-def Create(printFlag = False):
+def Create(folder, printFlag = False):
     """
     Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
     MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. Populates the\
     TestResult table with default values to be overwritten by the call to the FAIRScorer function in the notebook.
     
+    :param folder: The absolute file path of the SPASE record/directory containing the record(s) the user wants scraped.
+    :type folder: String
     :param printFlag: A boolean determining if the user wants to print more details of what the function is doing.
-    :type conn: Boolean
-    :param update: A boolean determining if updating the MetadataEntries table or not
-    :type entry: Boolean
+    :type printFlag: Boolean
     :return: None
     """
     # import functions from .py files and from built-in packages
@@ -23,8 +23,8 @@ def Create(printFlag = False):
     SPASE_paths = []
 
     # get user input and extract all SPASE records
-    print("Enter root folder you want to search")
-    folder = input()
+    #print("Enter root folder you want to search")
+    #folder = input()
     print("You entered " + folder)
     SPASE_paths = getPaths(folder, SPASE_paths)
     if printFlag:
@@ -78,23 +78,7 @@ def Create(printFlag = False):
             try:
                 with sqlite3.connect('SPASE_Data.db') as conn:                
                     # add or update entry to MetadataEntries
-                    for urls in url:
-                        '''# add a new or update an existing SPASE record in MetadataEntries
-                        row = execution(f""" SELECT rowNum FROM MetadataEntries2
-                            WHERE SPASE_id = '{ResourceID}' AND URL = '{url[i]}' """, 1)
-                        # print if adding new entry
-                        if not row:
-                            if printFlag:
-                                print(f"Created a Metadata entry with the row number '{row[0]}'")
-                            elif j == 0:
-                                print("Creating Metadata entries")
-                        # print that updating an existing entry
-                        else:
-                            if printFlag:
-                                print(f"Updated a MetadataEntries record with the row number '{row[0]}' ")
-                            elif j == 0:
-                                print("Updating Metadata entries")'''
-                        
+                    for urls in url:                        
                         UpdateStmt = f''' INSERT INTO MetadataEntries
                                             (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
                                             license,URL,prodKey,description,PID)
@@ -116,56 +100,40 @@ def Create(printFlag = False):
                             print(f"'{prodKey[i]}' was assigned to prodKey")
                         executionALL(UpdateStmt)
                         i += 1
-                        
-                        '''# add a new SPASE Record to MetadataEntries
-                        if not update:
-                            Metadata = (ResourceID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
-                            Record_id = add_Metadata(conn, Metadata)
-                            if printFlag:
-                                print(f'Created a Metadata entry with the row number {Record_id}')
-                            elif j == 0:
-                                print("Creating Metadata entries")
-                            i += 1
-                        # update an existing SPASE record in MetadataEntries
-                        elif update:
-                            row = execution(f""" SELECT rowNum FROM MetadataEntries
-                            WHERE SPASE_id = '{ResourceID}' AND URL = '{url[i]}' """, 1)
-                            UpdateStmt = f""" UPDATE MetadataEntries
-                            SET (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
-                                license,URL,prodKey,description,PID) = 
-                                ('{ResourceID}','{author}','{authorRole}','{pub}','{pubYear}','{datasetName}','{license}',
-                                '{url[i]}','{prodKey[i]}','{desc}','{PID}')
-                            WHERE rowNum = '{row[0]}' """
-                            # see if any new records were added
-                            try:
-                                executionALL(UpdateStmt)
-                                if printFlag:
-                                    print(f"Updated a MetadataEntries record with the row number '{row[0]}' ")
-                                elif j == 0:
-                                    print("Updating Metadata entries")
-                            # if there are new records added, use the add_Metadata function
-                            except IndexError:
-                                Metadata = (ResourceID,author,authorRole,pub,pubYear,datasetName,license,url[i],prodKey[i],desc,PID)
-                                Record_id = add_Metadata(conn, Metadata)
-                                if printFlag:
-                                    print(f'Created a Metadata entry with the row number {Record_id}')
-                            finally:
-                                i += 1'''
-                    # add a new Source record
-                    Sources = (ResourceID,authorField,pubField,pubDateField,datasetNameField,licenseField,
-                               datalinkField,descField,PIDField)
-                    Record_id = add_Sources(conn, Sources)
-                    if printFlag:
-                        print(f'Created a Sources entry with row number {Record_id}')
-                    # add a new Records entry
+                    # add or update Records entry
                     before, sep, after = ResourceID.partition('NASA')
                     compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
-                    entry = (ResourceID,version,ReleaseDate,compURL)
-                    Record_id = add_Records(conn, entry)
-                    if printFlag:
-                        print(f'Created a Records entry with the row number {Record_id}')
+                    UpdateStmt = f''' INSERT INTO Records
+                                            (SPASE_id, SPASE_Version,LastModified,SPASE_URL)
+                                        VALUES ("{ResourceID}","{version}","{ReleaseDate}","{compURL}")
+                                        ON CONFLICT (SPASE_id) DO
+                                        UPDATE
+                                        SET
+                                            SPASE_version = excluded.SPASE_version,
+                                            LastModified = excluded.LastModified,
+                                            SPASE_URL = excluded.SPASE_URL; '''
+                    executionALL(UpdateStmt)                    
+                    # add or update Source record
+                    UpdateStmt = f''' INSERT INTO MetadataSources
+                                            (SPASE_id,author_source,publisher_source,
+                                            publication_yr_source,datasetName_source,license_source,
+                                            datalink_source,description_source,PID_source)
+                                        VALUES ("{ResourceID}","{authorField}","{pubField}",
+                                                "{pubDateField}","{datasetNameField}","{licenseField}",
+                                                "{datalinkField}","{descField}","{PIDField}")
+                                        ON CONFLICT (SPASE_id) DO
+                                        UPDATE
+                                        SET
+                                            author_source = excluded.author_source,
+                                            publisher_source = excluded.publisher_source,
+                                            publication_yr_source = excluded.publication_yr_source,
+                                            datasetName_source = excluded.datasetName_source,
+                                            license_source = excluded.license_source,
+                                            datalink_source = excluded.datalink_source,
+                                            description_source = excluded.description_source,
+                                            PID_source = excluded.PID_source; '''
+                    executionALL(UpdateStmt)
 
-            # errors with 'UNIQUE CONSTRAINT Failed' are intentional and prevent duplicate records being added to MetadataSources
             except sqlite3.Error as e:
                 print(e)
 
@@ -174,7 +142,6 @@ def Create(printFlag = False):
 
         else:
             continue
-        j += 1
             
     # collects SPASE_id's of records that answer analysis questions
     testObj = Links()
@@ -182,7 +149,7 @@ def Create(printFlag = False):
      PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
-    TestResultRecords = execution("SELECT DISTINCT(SPASE_id) FROM TestResults", 1)
+    TestResultRecords = execution("SELECT DISTINCT(SPASE_id) FROM TestResults")
 
     # create the table with 0 as default for all, passing all records to the first insert call
     try:
@@ -207,41 +174,97 @@ def Create(printFlag = False):
 
     # iterate thru lists one by one and update column for each record if in the list (if record in author, has_author = 1)
     # UPDATE stmt for each test
-    if len(records) != len(TestResultRecords):
-        TestUpdate(authorRecords, "has_author")    
-        TestUpdate(pubRecords, "has_pub")
-        TestUpdate(pubYrRecords, "has_pubYr")
-        TestUpdate(datasetNameRecords, "has_datasetName")
-        TestUpdate(licenseRecords, "has_license")
-        TestUpdate(urlRecords, "has_url")
-        TestUpdate(NASAurlRecords, "has_NASAurl")
-        TestUpdate(PIDRecords, "has_PID")
-        TestUpdate(descriptionRecords, "has_desc")
-        TestUpdate(citationRecords, "has_citation")
-        TestUpdate(complianceRecords, "has_compliance")
+    TestUpdate(authorRecords, "has_author")    
+    TestUpdate(pubRecords, "has_pub")
+    TestUpdate(pubYrRecords, "has_pubYr")
+    TestUpdate(datasetNameRecords, "has_datasetName")
+    TestUpdate(licenseRecords, "has_license")
+    TestUpdate(urlRecords, "has_url")
+    TestUpdate(NASAurlRecords, "has_NASAurl")
+    TestUpdate(PIDRecords, "has_PID")
+    TestUpdate(descriptionRecords, "has_desc")
+    TestUpdate(citationRecords, "has_citation")
+    TestUpdate(complianceRecords, "has_compliance")
     
-def View():
+def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
+                    "url","NASAurl", "PID", "description", "citation", "compliance",
+                   "citationWOPID", "AL1", "AL2", "AL3", "ALL"]):
     """
-    Creates Counts and Links objects to print the number of records that meet each test criteria as well as return those links \
-    to the caller in the form of a tuple.
+    Prints the number of records that meet each test criteria provided as well as return those links \
+    to the caller in the form of a 2D list.
     
-    :return: A tuple containing lists of all records that fulfill certain test criteria.
-    :rtype: tuple
+    :return: A list containing lists of all records that fulfill certain test criteria.
+    :rtype: list
     """
     from QueryPrinter import Counts, Links
     
-    # print counts of SPASE records that answer analysis questions
-    Obj = Counts()
-    Obj.allRecords()
-    #Obj.SDAC_Records()
-    #Obj.SPDF_Records()
+    desiredRecords = []
     
     testObj = Links()
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
+     PIDRecords, descriptionRecords, citationRecords, complianceRecords, citeWOPIDRecords, AL1Records, AL2Records, AL3Records,
+     ALLRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
+    
+    # print counts of SPASE records that answer analysis questions
+    for record in desired:
+        if record == "all":
+            print("There are " + str(len(records)) + " records total.")
+            desiredRecords += [records]
+        elif record == "author":
+            print("There are " + str(len(authorRecords)) + " records with an author.")
+            desiredRecords += [authorRecords]
+        elif record == "pub":
+            print("There are " + str(len(pubRecords)) + " records with a publisher.")
+            desiredRecords += [pubRecords]
+        elif record == "pubYr":
+            print("There are " + str(len(pubYrRecords)) + " records with a publication year.")
+            desiredRecords += [pubYrRecords]
+        elif record == "datasetName":
+            print("There are " + str(len(datasetNameRecords)) + " records with a dataset.")
+            desiredRecords += [datasetNameRecords]
+        elif record == "license":
+            print("There are " + str(len(licenseRecords)) + " records with a license.")
+            desiredRecords += [licenseRecords]
+        elif record == "url":
+            print("There are " + str(len(urlRecords)) + " records with a URL.")
+            desiredRecords += [urlRecords]
+        elif record == "NASAurl":
+            print("There are " + str(len(NASAurlRecords)) + " records with a NASA URL.")
+            desiredRecords += [NASAurlRecords]
+        elif record == "PID":
+            print("There are " + str(len(PIDRecords)) + " records with a persistent identifier.")
+            desiredRecords += [PIDRecords]
+        elif record == "description":
+            print("There are " + str(len(descriptionRecords)) + " records with a description.")
+            desiredRecords += [descriptionRecords]
+        elif record == "citation":
+            print("There are " + str(len(citationRecords)) + " records with citation info.")
+            desiredRecords += [citationRecords]
+        elif record == "citationWOPID":
+            print("There are " + str(len(citeWOPIDRecords)) + " records that have all citation info except PID.")
+            desiredRecords += [citeWOPIDRecords]
+        elif record == "compliance":
+            print("There are " + str(len(complianceRecords)) + " records that meet DCAT-US3 compliance.")
+            desiredRecords += [complianceRecords]
+        elif record == "AL1":
+            print("There are " + str(len(AL1Records)) + " records that have at least one desired field.")
+            desiredRecords += [AL1Records]
+        elif record == "AL2":
+            print("There are " + str(len(AL2Records)) + " records that have at least two desired fields.")
+            desiredRecords += [AL2Records]
+        elif record == "AL3":
+            print("There are " + str(len(AL3Records)) + " records that have at least three desired fields.")
+            desiredRecords += [AL3Records]
+        elif record == "ALL":
+            print("There are " + str(len(ALLRecords)) + " records that have all desired fields.")
+            desiredRecords += [ALLRecords]
+            
+    #Obj = Counts()
+    #Obj.allRecords()
+    #Obj.SDAC_Records()
+    #Obj.SPDF_Records()
 
-    # return SPASE_id's of records that answer analysis questions
-    return (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords)
+    # return SPASE_id's of records that pass the test specified by caller
+    return desiredRecords
