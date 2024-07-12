@@ -33,7 +33,6 @@ def create_sqlite_database(filename):
             conn.close()
 
 # add table to existing db
-# Test Results hOLDs input of a 1 or 0 depending on if record meets tested criteria
 
 def create_tables():
     """
@@ -208,10 +207,11 @@ def add_Records(conn, entry):
 def execution(stmt, number = "single"):
     """
     Connects to the given SQLite database, creates a cursor object, and calls the execute method 
-    with the stmt argument. The number argument has default value of single, which will format the return correctly when selecting
-    only one item. Otherwise pass 'multiple' as the argument when selecting more than one item. Calls the fetchall method to get
-    all rows returned by the statement that was executed. This also displays error messages if any arise. Lastly, it returns the
-    values of the matching items from the SQLite SELECT statement in a list.
+    with the stmt argument. The number argument has default value of single, which will format the 
+    return correctly when selecting only one item. Otherwise pass 'multiple' as the argument when 
+    selecting more than one item. Calls the fetchall method to get all rows returned by the 
+    statement that was executed. This also displays error messages if any arise. Lastly, it returns 
+    the values of the matching items from the SQLite SELECT statement in a list.
     
     :param stmt: A string of the SQLite statement to be executed.
     :type stmt: String
