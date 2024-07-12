@@ -17,7 +17,7 @@ def Create(folder, printFlag = False):
     from SQLiteFun import (create_tables, add_Metadata, add_Sources, add_Records, execution, executionALL, create_tables,
                           add_TestResults, TestUpdate)
     from DatalinkSep import AccessRightsSep
-    from QueryPrinter import Links
+    from RecordGrabber import Links
     
     # list that holds paths returned by PathGrabber
     SPASE_paths = []
@@ -49,15 +49,19 @@ def Create(folder, printFlag = False):
 
             # add record to searched
             searched.append(record)
+            
             # grab only year from the date
             pubYear = pubDate[0:4]
+            
             # concatenate author and authorRole into single strings
+             # add Code E here
             author = ", ".join(author)
             authorRole = ", ".join(authorRole)
 
             if printFlag:
                 print("The ResourceID is " + ResourceID + " which was obtained from " + ResourceIDField)
                 print("The author(s) are " + author + " who are " + authorRole + " which was obtained from " + authorField)
+                # add Code F here
                 print("The publication year is " + pubYear + " which was obtained from " + pubDateField)
                 print("The publisher is " + pub + " which was obtained from " + pubField)
                 print("The dataset name is " + datasetName + " which was obtained from " + datasetNameField)
@@ -78,7 +82,8 @@ def Create(folder, printFlag = False):
             try:
                 with sqlite3.connect('SPASE_Data.db') as conn:                
                     # add or update entry to MetadataEntries
-                    for urls in url:                        
+                    for urls in url:
+                        # Add Code G, Code H, and Code I in this statement
                         UpdateStmt = f''' INSERT INTO MetadataEntries
                                             (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
                                             license,URL,prodKey,description,PID)
@@ -145,6 +150,7 @@ def Create(folder, printFlag = False):
             
     # collects SPASE_id's of records that answer analysis questions
     testObj = Links()
+    # Add Code N here
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
      PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
@@ -161,6 +167,7 @@ def Create(folder, printFlag = False):
                     continue
                 # if it is a new SPASE record
                 else:
+                    # Add Code J to this assignment statement
                     Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
                     Record_id = add_TestResults(conn, Test)
                     if printFlag:
@@ -174,6 +181,7 @@ def Create(folder, printFlag = False):
 
     # iterate thru lists one by one and update column for each record if in the list (if record in author, has_author = 1)
     # UPDATE stmt for each test
+    # Add Code O here
     TestUpdate(authorRecords, "has_author")    
     TestUpdate(pubRecords, "has_pub")
     TestUpdate(pubYrRecords, "has_pubYr")
@@ -186,9 +194,9 @@ def Create(folder, printFlag = False):
     TestUpdate(citationRecords, "has_citation")
     TestUpdate(complianceRecords, "has_compliance")
     
-def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
-                    "url","NASAurl", "PID", "description", "citation", "compliance",
-                   "citationWOPID", "AL1", "AL2", "AL3", "ALL"]):
+    # Add Code Q here
+def View(desired = ["allRecords", "author", "pub", "pubYr", "datasetName", "license",
+                    "url","NASAurl", "PID", "description", "citation", "compliance"]):
     """
     Prints the number of records that meet each test criteria provided as well as return those links \
     to the caller in the form of a 2D list.
@@ -196,11 +204,14 @@ def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
     :return: A list containing lists of all records that fulfill certain test criteria.
     :rtype: list
     """
-    from QueryPrinter import Counts, Links
-    
-    desiredRecords = []
+
+    from RecordGrabber import Links
+    # Add Code R here
+    desiredRecords = {"all": [], "author": [], "pub": [], "pubYr": [], "datasetName": [], "license": [], "url": [],
+                      "NASAurl": [], "PID": [], "description": [], "citation": [], "compliance": []}
     
     testObj = Links()
+    # Add Code P here
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
      PIDRecords, descriptionRecords, citationRecords, complianceRecords, citeWOPIDRecords, AL1Records, AL2Records, AL3Records,
      ALLRecords) = testObj.allRecords()
@@ -211,60 +222,41 @@ def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
     for record in desired:
         if record == "all":
             print("There are " + str(len(records)) + " records total.")
-            desiredRecords += [records]
+            desiredRecords["all"] = records
         elif record == "author":
             print("There are " + str(len(authorRecords)) + " records with an author.")
-            desiredRecords += [authorRecords]
+            desiredRecords["author"] = authorRecords
         elif record == "pub":
             print("There are " + str(len(pubRecords)) + " records with a publisher.")
-            desiredRecords += [pubRecords]
+            desiredRecords["pub"] = pubRecords
         elif record == "pubYr":
             print("There are " + str(len(pubYrRecords)) + " records with a publication year.")
-            desiredRecords += [pubYrRecords]
+            desiredRecords["pubYr"] = pubYrRecords
         elif record == "datasetName":
             print("There are " + str(len(datasetNameRecords)) + " records with a dataset.")
-            desiredRecords += [datasetNameRecords]
+            desiredRecords["datasetName"] = datasetNameRecords
         elif record == "license":
             print("There are " + str(len(licenseRecords)) + " records with a license.")
-            desiredRecords += [licenseRecords]
+            desiredRecords["license"] = licenseRecords
         elif record == "url":
             print("There are " + str(len(urlRecords)) + " records with a URL.")
-            desiredRecords += [urlRecords]
+            desiredRecords["url"] = urlRecords
         elif record == "NASAurl":
             print("There are " + str(len(NASAurlRecords)) + " records with a NASA URL.")
-            desiredRecords += [NASAurlRecords]
+            desiredRecords["NASAurl"] = NASAurlRecords
         elif record == "PID":
             print("There are " + str(len(PIDRecords)) + " records with a persistent identifier.")
-            desiredRecords += [PIDRecords]
+            desiredRecords["PID"] = PIDRecords
         elif record == "description":
             print("There are " + str(len(descriptionRecords)) + " records with a description.")
-            desiredRecords += [descriptionRecords]
+            desiredRecords["description"] = descriptionRecords
         elif record == "citation":
             print("There are " + str(len(citationRecords)) + " records with citation info.")
-            desiredRecords += [citationRecords]
-        elif record == "citationWOPID":
-            print("There are " + str(len(citeWOPIDRecords)) + " records that have all citation info except PID.")
-            desiredRecords += [citeWOPIDRecords]
+            desiredRecords["citation"] = citationRecords
         elif record == "compliance":
             print("There are " + str(len(complianceRecords)) + " records that meet DCAT-US3 compliance.")
-            desiredRecords += [complianceRecords]
-        elif record == "AL1":
-            print("There are " + str(len(AL1Records)) + " records that have at least one desired field.")
-            desiredRecords += [AL1Records]
-        elif record == "AL2":
-            print("There are " + str(len(AL2Records)) + " records that have at least two desired fields.")
-            desiredRecords += [AL2Records]
-        elif record == "AL3":
-            print("There are " + str(len(AL3Records)) + " records that have at least three desired fields.")
-            desiredRecords += [AL3Records]
-        elif record == "ALL":
-            print("There are " + str(len(ALLRecords)) + " records that have all desired fields.")
-            desiredRecords += [ALLRecords]
-            
-    #Obj = Counts()
-    #Obj.allRecords()
-    #Obj.SDAC_Records()
-    #Obj.SPDF_Records()
+            desiredRecords["compliance"] = complianceRecords
+        # add Code S here
 
     # return SPASE_id's of records that pass the test specified by caller
     return desiredRecords
