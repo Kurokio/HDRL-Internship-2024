@@ -1,3 +1,9 @@
+""" Function List:
+Create: Scrapes all desired metadata present in the given directory and creates and populates the 
+        MetadataEntries, MetadataSources, Records, and TestResults tables.
+View: Prints the count of and returns the SPASE_id's of the records desired.
+"""
+
 def Create(folder, printFlag = False):
     """
     Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
@@ -119,6 +125,7 @@ def Create(folder, printFlag = False):
                                             SPASE_URL = excluded.SPASE_URL; '''
                     executionALL(UpdateStmt)                    
                     # add or update Source record
+                    # Code U, Code V, and Code W here
                     UpdateStmt = f''' INSERT INTO MetadataSources
                                             (SPASE_id,author_source,publisher_source,
                                             publication_yr_source,datasetName_source,license_source,
@@ -195,14 +202,36 @@ def Create(folder, printFlag = False):
     TestUpdate(complianceRecords, "has_compliance")
     
     # Add Code Q here
-def View(desired = ["allRecords", "author", "pub", "pubYr", "datasetName", "license",
+def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
                     "url","NASAurl", "PID", "description", "citation", "compliance"]):
     """
-    Prints the number of records that meet each test criteria provided as well as return those links \
-    to the caller in the form of a 2D list.
+    Prints the number of records that meet each test criteria provided as well as return those SPASE_id's \
+    to the caller in the form of a dictionary. The keys are the Strings passed as parameters and the \
+    values are the list of SPASE_id's that fulfill that test.
     
-    :return: A list containing lists of all records that fulfill certain test criteria.
-    :rtype: list
+    :param desired: A list of Strings which determine the kind of records whose counts are printed and whose \
+                        SPASE_id's are assigned to the dictionary returned. The default value is all kinds.
+    :param type: list
+    
+    As an example, calling the View function with no parameters, such as records = View(), will use the \
+    default value for desired, which is a list of all the kinds of records. This means it will print the \
+    number of (distinct) records that are present in the MetdataEntries table, have authors, have publishers, \
+    have publication years, have datasetNames, have licenses, have URLs, have NASA URLs, have persistent \
+    identifiers, have descriptions, have citation info, and meet compliance standards. It will also return a \
+    dictionary that contains all the SPASE_id's of these records, separated on their types by keys of the \
+    same name, and assign this dictionary to records. This means that the SPASE_id's are accessible by calling \
+    records["x"], where x is the type of records desired such as "author", "url", etc.
+    
+    For another example, calling "records = View(desired = ['all'])" prints the number of distinct SPASE records in the \
+    MetadataEntries table as well as returns and assigns the returned dictionary to records. This now makes the \
+    list of SPASE_id's found in the table accessible by calling records["all"].
+    
+    One can also pass multiple parameters as seen by calling "records = View(desired = ['pub', 'PID'])". This \
+    prints the number of records that have publishers and the number of records that have persistent identifiers. \
+    Once again, the SPASE_id's of those records and then accessible by calling records["pub"] and records["PID"].
+    
+    :return: A dictionary containing lists of all records that fulfill certain test criteria as values.
+    :rtype: dictionary
     """
 
     from RecordGrabber import Links
