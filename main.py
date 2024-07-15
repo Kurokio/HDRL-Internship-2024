@@ -7,8 +7,9 @@ View: Prints the count of and returns the SPASE_id's of the records desired.
 def Create(folder, printFlag = False):
     """
     Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
-    MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. Populates the\
-    TestResult table with default values to be overwritten by the call to the FAIRScorer function in the notebook.
+    MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. 
+    Populates the TestResult table with default values to be overwritten by the call to the FAIRScorer function
+    in the notebook.
     
     :param folder: The absolute file path of the SPASE record/directory containing the record(s) the user wants scraped.
     :type folder: String
@@ -205,33 +206,45 @@ def Create(folder, printFlag = False):
 def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
                     "url","NASAurl", "PID", "description", "citation", "compliance"]):
     """
-    Prints the number of records that meet each test criteria provided as well as return those SPASE_id's \
-    to the caller in the form of a dictionary. The keys are the Strings passed as parameters and the \
+    Prints the number of records that meet each test criteria provided as well as return those SPASE_id's
+    to the caller in the form of a dictionary. The keys are the Strings passed as parameters and the
     values are the list of SPASE_id's that fulfill that test.
     
-    :param desired: A list of Strings which determine the kind of records whose counts are printed and whose \
+    :param desired: A list of Strings which determine the kind of records whose counts are printed and whose
                         SPASE_id's are assigned to the dictionary returned. The default value is all kinds.
     :param type: list
-    
-    As an example, calling the View function with no parameters, such as records = View(), will use the \
-    default value for desired, which is a list of all the kinds of records. This means it will print the \
-    number of (distinct) records that are present in the MetdataEntries table, have authors, have publishers, \
-    have publication years, have datasetNames, have licenses, have URLs, have NASA URLs, have persistent \
-    identifiers, have descriptions, have citation info, and meet compliance standards. It will also return a \
-    dictionary that contains all the SPASE_id's of these records, separated on their types by keys of the \
-    same name, and assign this dictionary to records. This means that the SPASE_id's are accessible by calling \
-    records["x"], where x is the type of records desired such as "author", "url", etc.
-    
-    For another example, calling "records = View(desired = ['all'])" prints the number of distinct SPASE records in the \
-    MetadataEntries table as well as returns and assigns the returned dictionary to records. This now makes the \
-    list of SPASE_id's found in the table accessible by calling records["all"].
-    
-    One can also pass multiple parameters as seen by calling "records = View(desired = ['pub', 'PID'])". This \
-    prints the number of records that have publishers and the number of records that have persistent identifiers. \
-    Once again, the SPASE_id's of those records and then accessible by calling records["pub"] and records["PID"].
-    
     :return: A dictionary containing lists of all records that fulfill certain test criteria as values.
     :rtype: dictionary
+    
+    Method Calls:
+    
+    records = View():
+    - prints the number of (distinct) records that are present in the MetdataEntries table
+    - prints number of records that have authors
+    - prints number of records that have publishers
+    - prints number of records that have publication years
+    - prints number of records that have datasetNames
+    - prints number of records that have licenses
+    - prints number of records that have URLs
+    - prints number of records that have NASA URLs
+    - prints number of records that have persistent identifiers
+    - prints number of records that have descriptions
+    - prints number of records that have citation info
+    - prints number of records that meet compliance standards. 
+    - returns a dictionary that contains all the SPASE_id's of these records, separated on their
+        types by keys of the same name
+    - assign this dictionary to records
+    
+    records = View(desired = ['all']):
+    - prints the number of distinct SPASE records in the MetadataEntries table
+    - returns the SPASE_id's of these records in a dictionary labeled by key of the same name ("all")
+    - assigns the returned dictionary to records. 
+    
+    records = View(desired = ['pub', 'PID']):
+    - prints the number of records that have publishers
+    - prints the number of records that have persistent identifiers.
+    - returns the SPASE_id's of these records in a dictionary labeled by keys of the same name ("pub" and "PID")
+    - assigns the returned dictionary to records. 
     """
 
     from RecordGrabber import Links
@@ -242,8 +255,7 @@ def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
     testObj = Links()
     # Add Code P here
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords, citeWOPIDRecords, AL1Records, AL2Records, AL3Records,
-     ALLRecords) = testObj.allRecords()
+     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
     
