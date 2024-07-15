@@ -175,23 +175,23 @@ class Links():
 
         # prints links for all records
         # Add Code L somewehere here
-        links = execution(self.totalStmt, 'multiple')
-        authors = execution(self.authorStmt, 'multiple')
-        publishers = execution(self.pubStmt, 'multiple')
-        pubYrs = execution(self.pubYrStmt, 'multiple')
-        datasetNames = execution(self.datasetNameStmt, 'multiple')
-        licenses = execution(self.licenseStmt, 'multiple')
-        urls = execution(self.urlStmt, 'multiple')
-        NASAurls = execution(self.NASAurlStmt, 'multiple')
-        PIDs = execution(self.PID_Stmt, 'multiple')
-        descriptions = execution(self.descStmt, 'multiple')
-        citations = execution(self.citationStmt, 'multiple')
-        #citeWOPIDs = execution(self.citationWoPID_Stmt, 'multiple')
-        compliances = execution(self.complianceStmt, 'multiple')
-        '''AL1 = execution(self.AL1_Stmt, 'multiple')
-        AL2 = execution(self.AL2_Stmt, 'multiple')
-        AL3 = execution(self.AL3_Stmt, 'multiple')
-        ALL = execution(self.allStmt, 'multiple')'''
+        links = execution(self.totalStmt)
+        authors = execution(self.authorStmt)
+        publishers = execution(self.pubStmt)
+        pubYrs = execution(self.pubYrStmt)
+        datasetNames = execution(self.datasetNameStmt)
+        licenses = execution(self.licenseStmt)
+        urls = execution(self.urlStmt)
+        NASAurls = execution(self.NASAurlStmt)
+        PIDs = execution(self.PID_Stmt)
+        descriptions = execution(self.descStmt)
+        citations = execution(self.citationStmt)
+        #citeWOPIDs = execution(self.citationWoPID_Stmt)
+        compliances = execution(self.complianceStmt)
+        '''AL1 = execution(self.AL1_Stmt)
+        AL2 = execution(self.AL2_Stmt)
+        AL3 = execution(self.AL3_Stmt)
+        ALL = execution(self.allStmt)'''
         # Add Code M somewhere in this return
         return (links, authors, publishers, pubYrs, datasetNames, licenses, urls, NASAurls, PIDs,
                 descriptions, citations, compliances) # citeWOPIDs, AL1, AL2, AL3, ALL)
