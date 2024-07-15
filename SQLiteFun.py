@@ -16,22 +16,20 @@ import sqlite3
 
 def create_sqlite_database(filename):
     """
-    Creates a database connection to a new SQLite database with the name provided. This also tells
-    you the SQLite version as well as any errors that may occur.
+    Creates a database connection to a new SQLite database with the name provided. 
+    If the database already exists, it returns a connection object.
+    This also tells you any errors that may occur.
     
     :param filename: String that contains the desired name of the database
     :type filename: String
-    :return: None
+    :return: Connection object
     """
     conn = None
     try:
         conn = sqlite3.connect(filename)
-        print(sqlite3.sqlite_version)
+        return conn
     except sqlite3.Error as e:
         print(e)
-    finally:
-        if conn:
-            conn.close()
 
 # add table to existing db
 
@@ -317,6 +315,7 @@ def FAIRScorer(records):
     cols = cols[5:16]
     for record in records:
         score = 0
+        #print(type(record))
         #print(record + " is the current record")
         
         # calculate FAIR score value
