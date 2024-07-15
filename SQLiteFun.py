@@ -21,6 +21,7 @@ def create_sqlite_database(filename):
     
     :param filename: String that contains the desired name of the database
     :type filename: String
+    :return: None
     """
     conn = None
     try:
@@ -39,8 +40,12 @@ def create_tables():
     Connects to the given SQLite database, creates a cursor object, and calls the executescript method 
     with the sql_statements argument. These changes are then committed which creates the MetadataEntries, 
     MetadataSources, TestResults, and Records tables in the specified database. This also displays error 
-    messages if any arise."""
+    messages if any arise.
+    
+    :return: None
+    """
 
+    # Code T goes in this assignment statement
     sql_statements = (
         """CREATE TABLE IF NOT EXISTS MetadataEntries (
                 rowNum INTEGER PRIMARY KEY, 
@@ -241,6 +246,7 @@ def executionALL(stmt):
     
     :param stmt: A string of the SQLite statement to be executed.
     :type stmt: String
+    :return: None
     """
     # create a database connection and execute statement
     try:
@@ -248,20 +254,6 @@ def executionALL(stmt):
             cur = conn.cursor()
             cur.execute(stmt)
             conn.commit()
-    except sqlite3.Error as e:
-        print(e)
-
-# How many records published by SDAC in X year?
-def SDAC_records(yr):
-    try:
-        with sqlite3.connect("SPASE_Data.db") as conn:
-            cur = conn.cursor()
-            cur.execute("""SELECT COUNT(DISTINCT SPASE_id) FROM MetadataEntries 
-                            WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
-                            "%Solar Data Analysis Center") AND publicationYr=?""", (yr,))
-            rows = cur.fetchall()
-            for row in rows:
-                print("There are " + str(row[0]) + " records published by SDAC in the year " + yr)
     except sqlite3.Error as e:
         print(e)
         
@@ -276,6 +268,7 @@ def TestUpdate(records, column):
     :type records: list
     :param column: A string of the TestResults column to be updated.
     :type column: string
+    :return: None
     """
     for record in records:
         #print(record + " is the current record")
@@ -290,6 +283,8 @@ def TestUpdate(records, column):
 def databaseInfo():
     """
     Prints all table names and all the names of their associated columns
+    
+    :return: None
     """
     # print all table names and the names of their columns
     conn = sqlite3.connect('SPASE_Data.db')
@@ -312,6 +307,7 @@ def FAIRScorer(records):
     
     :param records: A list of all the links in table.
     :type records: list
+    :return: None
     """
     conn = sqlite3.connect('SPASE_Data.db')
     # collect all column names
