@@ -16,7 +16,10 @@ class Links():
     for SPDF and SDAC, are created by joining two queries using SQLite's INTERSECT. This class also houses 
     several functions which then returns the results from these queries. The printing is 
     split into 3 categories: all records, SDAC records, and SPDF records. The results are the SPASE_id's of
-    the records that match the criteria given by the SQLite statements."""
+    the records that match the criteria given by the SQLite statements.
+    
+    :return: a Links object
+    """
     
     # query stmts that answer analysis questions
     totalStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries;"""
@@ -29,7 +32,7 @@ class Links():
     urlStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE url NOT LIKE "" ;"""
     NASAurlStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE url NOT LIKE "" AND url!="No NASA Links";"""
 
-    PIDStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE PID NOT LIKE "" ;"""
+    PID_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE PID NOT LIKE "" ;"""
     descStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE description NOT LIKE "" ;"""
     # Code K can go here
     has_citation = """author NOT LIKE ""
@@ -38,7 +41,7 @@ class Links():
                     AND publisher NOT LIKE "" """
     citationStmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
                     WHERE {has_citation};"""
-    citationWOPIDStmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    citationWoPID_Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
                     WHERE {has_citation} AND PID LIKE "" ;"""
     has_compliance = """ description NOT LIKE ""
                     AND datasetName NOT LIKE ""
@@ -49,14 +52,14 @@ class Links():
     # edit once get data link checker to include working data links as a check
 
     # at least one field
-    AL1Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    AL1_Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
                     WHERE {has_citation}
                     OR {has_compliance}
                     OR PID NOT LIKE ""
                     OR license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%";"""
 
     # at least 2 fields
-    AL2Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    AL2_Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
                     WHERE ({has_citation}
                     AND
                         {has_compliance}) 
@@ -82,7 +85,7 @@ class Links():
                         license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%");"""
 
     # at least 3 fields
-    AL3Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    AL3_Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
                     WHERE ({has_citation}
                     AND
                         {has_compliance}
@@ -115,54 +118,54 @@ class Links():
                     AND license LIKE "%cc0%" OR license LIKE "%Creative Commons Zero v1.0 Universal%";"""
 
     # all records with specified publisher
-    SDACStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    SDAC_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
                                 "%Solar Data Analysis Center)"""
-    SPDFStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    SPDF_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SPDF" OR publisher LIKE 
                                 "%Space Physics Data Facility")"""
 
     # intersect stmts match previous queries with results that only have SPDF or SDAC as publisher
-    SDACIntersect = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    SDAC_Intersect = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
                                 "%Solar Data Analysis Center")
                         INTERSECT """
-    SPDFIntersect = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    SPDF_Intersect = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SPDF" OR publisher LIKE 
                                 "%Space Physics Data Facility")
                         INTERSECT """
 
-    SDACauthor = SDACIntersect + authorStmt
-    SPDFauthor = SPDFIntersect + authorStmt
-    SDACpubStmt = SDACIntersect + pubStmt
-    SPDFpubStmt = SPDFIntersect + pubStmt
-    SDACpubYrStmt = SDACIntersect + pubYrStmt
-    SPDFpubYrStmt = SPDFIntersect + pubYrStmt
-    SDACdatasetNameStmt = SDACIntersect + datasetNameStmt
-    SPDFdatasetNameStmt = SPDFIntersect + datasetNameStmt
-    SDAClicenseStmt = SDACIntersect + licenseStmt
-    SPDFlicenseStmt = SPDFIntersect + licenseStmt
-    SDACurlStmt = SDACIntersect + urlStmt
-    SPDFurlStmt = SPDFIntersect + urlStmt
-    SDACNASAurlStmt = SDACIntersect + NASAurlStmt
-    SPDFNASAurlStmt = SPDFIntersect + NASAurlStmt
-    SDACPIDStmt = SDACIntersect + PIDStmt
-    SPDFPIDStmt = SPDFIntersect + PIDStmt
-    SDACdescStmt = SDACIntersect + descStmt
-    SPDFdescStmt = SPDFIntersect + descStmt
-    SDACcitationStmt = SDACIntersect + citationStmt
-    SPDFcitationStmt = SPDFIntersect + citationStmt
-    SDACcitationWOPIDStmt = SDACIntersect + citationWOPIDStmt
-    SPDFcitationWOPIDStmt = SPDFIntersect + citationWOPIDStmt
-    SDACcomplianceStmt = SDACIntersect + complianceStmt
-    SPDFcomplianceStmt = SPDFIntersect + complianceStmt
+    SDACauthor = SDAC_Intersect + authorStmt
+    SPDFauthor = SPDF_Intersect + authorStmt
+    SDACpubStmt = SDAC_Intersect + pubStmt
+    SPDFpubStmt = SPDF_Intersect + pubStmt
+    SDACpubYrStmt = SDAC_Intersect + pubYrStmt
+    SPDFpubYrStmt = SPDF_Intersect + pubYrStmt
+    SDACdatasetNameStmt = SDAC_Intersect + datasetNameStmt
+    SPDFdatasetNameStmt = SPDF_Intersect + datasetNameStmt
+    SDAClicenseStmt = SDAC_Intersect + licenseStmt
+    SPDFlicenseStmt = SPDF_Intersect + licenseStmt
+    SDACurlStmt = SDAC_Intersect + urlStmt
+    SPDFurlStmt = SPDF_Intersect + urlStmt
+    SDAC_NASAurlStmt = SDAC_Intersect + NASAurlStmt
+    SPDF_NASAurlStmt = SPDF_Intersect + NASAurlStmt
+    SDAC_PID_Stmt = SDAC_Intersect + PID_Stmt
+    SPDF_PID_Stmt = SPDF_Intersect + PID_Stmt
+    SDACdescStmt = SDAC_Intersect + descStmt
+    SPDFdescStmt = SPDF_Intersect + descStmt
+    SDACcitationStmt = SDAC_Intersect + citationStmt
+    SPDFcitationStmt = SPDF_Intersect + citationStmt
+    SDACcitationWoPID_Stmt = SDAC_Intersect + citationWoPID_Stmt
+    SPDFcitationWoPID_Stmt = SPDF_Intersect + citationWoPID_Stmt
+    SDACcomplianceStmt = SDAC_Intersect + complianceStmt
+    SPDFcomplianceStmt = SPDF_Intersect + complianceStmt
 
-    SDAC_AL1 = SDACIntersect + AL1Stmt
-    SPDF_AL1 = SPDFIntersect + AL1Stmt
-    SDAC_AL2 = SDACIntersect + AL2Stmt
-    SPDF_AL2 = SPDFIntersect + AL2Stmt
-    SDAC_AL3 = SDACIntersect + AL3Stmt
-    SPDF_AL3 = SPDFIntersect + AL3Stmt
+    SDAC_AL1 = SDAC_Intersect + AL1_Stmt
+    SPDF_AL1 = SPDF_Intersect + AL1_Stmt
+    SDAC_AL2 = SDAC_Intersect + AL2_Stmt
+    SPDF_AL2 = SPDF_Intersect + AL2_Stmt
+    SDAC_AL3 = SDAC_Intersect + AL3_Stmt
+    SPDF_AL3 = SPDF_Intersect + AL3_Stmt
     
     def allRecords(self):
         """Executes all SQLite SELECT statements that do not have a specified publisher and returns the lists.
@@ -180,14 +183,14 @@ class Links():
         licenses = execution(self.licenseStmt, 'multiple')
         urls = execution(self.urlStmt, 'multiple')
         NASAurls = execution(self.NASAurlStmt, 'multiple')
-        PIDs = execution(self.PIDStmt, 'multiple')
+        PIDs = execution(self.PID_Stmt, 'multiple')
         descriptions = execution(self.descStmt, 'multiple')
         citations = execution(self.citationStmt, 'multiple')
-        #citeWOPIDs = execution(self.citationWOPIDStmt, 'multiple')
+        #citeWOPIDs = execution(self.citationWoPID_Stmt, 'multiple')
         compliances = execution(self.complianceStmt, 'multiple')
-        '''AL1 = execution(self.AL1Stmt, 'multiple')
-        AL2 = execution(self.AL2Stmt, 'multiple')
-        AL3 = execution(self.AL3Stmt, 'multiple')
+        '''AL1 = execution(self.AL1_Stmt, 'multiple')
+        AL2 = execution(self.AL2_Stmt, 'multiple')
+        AL3 = execution(self.AL3_Stmt, 'multiple')
         ALL = execution(self.allStmt, 'multiple')'''
         # Add Code M somewhere in this return
         return (links, authors, publishers, pubYrs, datasetNames, licenses, urls, NASAurls, PIDs,
@@ -205,10 +208,10 @@ class Links():
         execution(self.SDAClicenseStmt, "with a license published by SDAC")
         execution(self.SDACurlStmt, "with a url published by SDAC")
         execution(self.SDACNASAurlStmt, "with a NASA url published by SDAC")
-        execution(self.SDACPIDStmt, "with a persistent identifier published by SDAC")
+        execution(self.SDACPID_Stmt, "with a persistent identifier published by SDAC")
         execution(self.SDACdescStmt, "with a description published by SDAC")
         execution(self.SDACcitationStmt, "with citation info published by SDAC")
-        execution(self.SDACcitationWOPIDStmt, "with citation info but no PID published by SDAC")
+        execution(self.SDACcitationWoPID_Stmt, "with citation info but no PID published by SDAC")
         execution(self.SDACcomplianceStmt, "that meet DCAT-US3 compliance published by SDAC")
         execution(self.SDAC_AL1, "with at least one desired field published by SDAC")
         execution(self.SDAC_AL2, "with at least two desired fields published by SDAC")
@@ -226,10 +229,10 @@ class Links():
         execution(self.SPDFlicenseStmt, "with a license published by SPDF")
         execution(self.SPDFurlStmt, "with a url published by SPDF")
         execution(self.SPDFNASAurlStmt, "with a NASA url published by SPDF")
-        execution(self.SPDFPIDStmt, "with a persistent identifier published by SPDF")
+        execution(self.SPDFPID_Stmt, "with a persistent identifier published by SPDF")
         execution(self.SPDFdescStmt, "with a description published by SPDF")
         execution(self.SPDFcitationStmt, "with citation info published by SPDF")
-        execution(self.SPDFcitationWOPIDStmt, "with citation info but no PID published by SPDF")
+        execution(self.SPDFcitationWoPID_Stmt, "with citation info but no PID published by SPDF")
         execution(self.SPDFcomplianceStmt, "that meet DCAT-US3 compliance published by SPDF")
         execution(self.SPDF_AL1, "with at least one desired field published by SPDF")
         execution(self.SPDF_AL2, "with at least two desired fields published by SPDF")
