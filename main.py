@@ -4,7 +4,7 @@ Create: Scrapes all desired metadata present in the given directory and creates 
 View: Prints the count of and returns the SPASE_id's of the records desired.
 """
 
-def Create(folder, printFlag = False):
+def Create(folder, conn, printFlag = False):
     """
     Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
     MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. 
@@ -13,6 +13,8 @@ def Create(folder, printFlag = False):
     
     :param folder: The absolute file path of the SPASE record/directory containing the record(s) the user wants scraped.
     :type folder: String
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :param printFlag: A boolean determining if the user wants to print more details of what the function is doing.
     :type printFlag: Boolean
     :return: None
@@ -21,8 +23,8 @@ def Create(folder, printFlag = False):
     import pprint, sqlite3
     from SPASE_Scraper_Script import SPASE_Scraper
     from PathGrabber import getPaths
-    from SQLiteFun import (create_tables, add_Metadata, add_Sources, add_Records, execution, executionALL, create_tables,
-                          add_TestResults, TestUpdate)
+    from SQLiteFun import (create_tables, add_Metadata, add_Sources, add_Records, execution, executionALL,
+                          add_TestResults, TestUpdate, create_sqlite_database)
     from DatalinkSep import AccessRightsSep
     from RecordGrabber import Links
     
@@ -82,70 +84,70 @@ def Create(folder, printFlag = False):
             license, url, prodKey = AccessRightsSep(AccessRights, printFlag)
 
             # add tables to existing database
-            create_tables()
+            create_tables(conn)
 
             # insert metadata entries into table
             i = 0        
             try:
-                with sqlite3.connect('SPASE_Data.db') as conn:                
-                    # add or update entry to MetadataEntries
-                    for urls in url:
-                        # Add Code G, Code H, and Code I in this statement
-                        UpdateStmt = f''' INSERT INTO MetadataEntries
-                                            (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
-                                            license,URL,prodKey,description,PID)
-                                        VALUES ("{ResourceID}","{author}","{authorRole}","{pub}","{pubYear}",
-                                        "{datasetName}","{license}","{url[i]}","{prodKey[i]}","description found","{PID}")
-                                        ON CONFLICT (SPASE_id, URL, prodKey) DO
-                                        UPDATE
-                                        SET
-                                            author = excluded.author,
-                                            authorRole = excluded.authorRole,
-                                            publisher = excluded.publisher,
-                                            publicationYr = excluded.publicationYr,
-                                            datasetName = excluded.datasetName,
-                                            license = excluded.license,
-                                            description = excluded.description,
-                                            PID = excluded.PID; '''
-                        if printFlag:
-                            print(f"'{url[i]}' was assigned to URL")
-                            print(f"'{prodKey[i]}' was assigned to prodKey")
-                        executionALL(UpdateStmt)
-                        i += 1
-                    # add or update Records entry
-                    before, sep, after = ResourceID.partition('NASA')
-                    compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
-                    UpdateStmt = f''' INSERT INTO Records
-                                            (SPASE_id, SPASE_Version,LastModified,SPASE_URL)
-                                        VALUES ("{ResourceID}","{version}","{ReleaseDate}","{compURL}")
-                                        ON CONFLICT (SPASE_id) DO
-                                        UPDATE
-                                        SET
-                                            SPASE_version = excluded.SPASE_version,
-                                            LastModified = excluded.LastModified,
-                                            SPASE_URL = excluded.SPASE_URL; '''
-                    executionALL(UpdateStmt)                    
-                    # add or update Source record
-                    # Code U, Code V, and Code W here
-                    UpdateStmt = f''' INSERT INTO MetadataSources
-                                            (SPASE_id,author_source,publisher_source,
-                                            publication_yr_source,datasetName_source,license_source,
-                                            datalink_source,description_source,PID_source)
-                                        VALUES ("{ResourceID}","{authorField}","{pubField}",
-                                                "{pubDateField}","{datasetNameField}","{licenseField}",
-                                                "{datalinkField}","{descField}","{PIDField}")
-                                        ON CONFLICT (SPASE_id) DO
-                                        UPDATE
-                                        SET
-                                            author_source = excluded.author_source,
-                                            publisher_source = excluded.publisher_source,
-                                            publication_yr_source = excluded.publication_yr_source,
-                                            datasetName_source = excluded.datasetName_source,
-                                            license_source = excluded.license_source,
-                                            datalink_source = excluded.datalink_source,
-                                            description_source = excluded.description_source,
-                                            PID_source = excluded.PID_source; '''
-                    executionALL(UpdateStmt)
+                #with sqlite3.connect('SPASE_Data.db') as conn:                
+                # add or update entry to MetadataEntries
+                for urls in url:
+                    # Add Code G, Code H, and Code I in this statement
+                    UpdateStmt = f''' INSERT INTO MetadataEntries
+                                        (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
+                                        license,URL,prodKey,description,PID)
+                                    VALUES ("{ResourceID}","{author}","{authorRole}","{pub}","{pubYear}",
+                                    "{datasetName}","{license}","{url[i]}","{prodKey[i]}","description found","{PID}")
+                                    ON CONFLICT (SPASE_id, URL, prodKey) DO
+                                    UPDATE
+                                    SET
+                                        author = excluded.author,
+                                        authorRole = excluded.authorRole,
+                                        publisher = excluded.publisher,
+                                        publicationYr = excluded.publicationYr,
+                                        datasetName = excluded.datasetName,
+                                        license = excluded.license,
+                                        description = excluded.description,
+                                        PID = excluded.PID; '''
+                    if printFlag:
+                        print(f"'{url[i]}' was assigned to URL")
+                        print(f"'{prodKey[i]}' was assigned to prodKey")
+                    executionALL(UpdateStmt, conn)
+                    i += 1
+                # add or update Records entry
+                before, sep, after = ResourceID.partition('NASA')
+                compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
+                UpdateStmt = f''' INSERT INTO Records
+                                        (SPASE_id, SPASE_Version,LastModified,SPASE_URL)
+                                    VALUES ("{ResourceID}","{version}","{ReleaseDate}","{compURL}")
+                                    ON CONFLICT (SPASE_id) DO
+                                    UPDATE
+                                    SET
+                                        SPASE_version = excluded.SPASE_version,
+                                        LastModified = excluded.LastModified,
+                                        SPASE_URL = excluded.SPASE_URL; '''
+                executionALL(UpdateStmt, conn)                    
+                # add or update Source record
+                # Code U, Code V, and Code W here
+                UpdateStmt = f''' INSERT INTO MetadataSources
+                                        (SPASE_id,author_source,publisher_source,
+                                        publication_yr_source,datasetName_source,license_source,
+                                        datalink_source,description_source,PID_source)
+                                    VALUES ("{ResourceID}","{authorField}","{pubField}",
+                                            "{pubDateField}","{datasetNameField}","{licenseField}",
+                                            "{datalinkField}","{descField}","{PIDField}")
+                                    ON CONFLICT (SPASE_id) DO
+                                    UPDATE
+                                    SET
+                                        author_source = excluded.author_source,
+                                        publisher_source = excluded.publisher_source,
+                                        publication_yr_source = excluded.publication_yr_source,
+                                        datasetName_source = excluded.datasetName_source,
+                                        license_source = excluded.license_source,
+                                        datalink_source = excluded.datalink_source,
+                                        description_source = excluded.description_source,
+                                        PID_source = excluded.PID_source; '''
+                executionALL(UpdateStmt, conn)
 
             except sqlite3.Error as e:
                 print(e)
@@ -160,29 +162,29 @@ def Create(folder, printFlag = False):
     testObj = Links()
     # Add Code N here
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
+     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
-    TestResultRecords = execution("SELECT DISTINCT(SPASE_id) FROM TestResults")
+    TestResultRecords = execution("SELECT DISTINCT(SPASE_id) FROM TestResults", conn)
 
     # create the table with 0 as default for all, passing all records to the first insert call
     try:
-        with sqlite3.connect('SPASE_Data.db') as conn:
-            k = 0
-            for record in records:
-                # if it is not a new SPASE Record
-                if record in TestResultRecords:
-                    continue
-                # if it is a new SPASE record
-                else:
-                    # Add Code J to this assignment statement
-                    Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
-                    Record_id = add_TestResults(conn, Test)
-                    if printFlag:
-                        print(f'Created a TestResults entry with the row number {Record_id}')
-                    elif k == 0:
-                        print("Creating TestResults entries")
-                k += 1
+        #with sqlite3.connect('SPASE_Data.db') as conn:
+        k = 0
+        for record in records:
+            # if it is not a new SPASE Record
+            if record in TestResultRecords:
+                continue
+            # if it is a new SPASE record
+            else:
+                # Add Code J to this assignment statement
+                Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
+                Record_id = add_TestResults(conn, Test)
+                if printFlag:
+                    print(f'Created a TestResults entry with the row number {Record_id}')
+                elif k == 0:
+                    print("Creating TestResults entries")
+            k += 1
 
     except sqlite3.Error as e:
                 print(e)
@@ -190,26 +192,28 @@ def Create(folder, printFlag = False):
     # iterate thru lists one by one and update column for each record if in the list (if record in author, has_author = 1)
     # UPDATE stmt for each test
     # Add Code O here
-    TestUpdate(authorRecords, "has_author")    
-    TestUpdate(pubRecords, "has_pub")
-    TestUpdate(pubYrRecords, "has_pubYr")
-    TestUpdate(datasetNameRecords, "has_datasetName")
-    TestUpdate(licenseRecords, "has_license")
-    TestUpdate(urlRecords, "has_url")
-    TestUpdate(NASAurlRecords, "has_NASAurl")
-    TestUpdate(PIDRecords, "has_PID")
-    TestUpdate(descriptionRecords, "has_desc")
-    TestUpdate(citationRecords, "has_citation")
-    TestUpdate(complianceRecords, "has_compliance")
+    TestUpdate(authorRecords, "has_author", conn)    
+    TestUpdate(pubRecords, "has_pub", conn)
+    TestUpdate(pubYrRecords, "has_pubYr", conn)
+    TestUpdate(datasetNameRecords, "has_datasetName", conn)
+    TestUpdate(licenseRecords, "has_license", conn)
+    TestUpdate(urlRecords, "has_url", conn)
+    TestUpdate(NASAurlRecords, "has_NASAurl", conn)
+    TestUpdate(PIDRecords, "has_PID", conn)
+    TestUpdate(descriptionRecords, "has_desc", conn)
+    TestUpdate(citationRecords, "has_citation", conn)
+    TestUpdate(complianceRecords, "has_compliance", conn)
     
     # Add Code Q here
-def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
+def View(conn, desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
                     "url","NASAurl", "PID", "description", "citation", "compliance"]):
     """
     Prints the number of records that meet each test criteria provided as well as return those SPASE_id's
     to the caller in the form of a dictionary. The keys are the Strings passed as parameters and the
     values are the list of SPASE_id's that fulfill that test.
     
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :param desired: A list of Strings which determine the kind of records whose counts are printed and whose
                         SPASE_id's are assigned to the dictionary returned. The default value is all kinds.
     :param type: list
@@ -218,7 +222,7 @@ def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
     
     Method Calls:
     
-    records = View():
+    records = View(conn):
     - prints the number of (distinct) records that are present in the MetdataEntries table
     - prints number of records that have authors
     - prints number of records that have publishers
@@ -235,12 +239,12 @@ def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
         types by keys of the same name
     - assign this dictionary to records
     
-    records = View(desired = ['all']):
+    records = View(conn, desired = ['all']):
     - prints the number of distinct SPASE records in the MetadataEntries table
     - returns the SPASE_id's of these records in a dictionary labeled by key of the same name ("all")
     - assigns the returned dictionary to records. 
     
-    records = View(desired = ['pub', 'PID']):
+    records = View(conn, desired = ['pub', 'PID']):
     - prints the number of records that have publishers
     - prints the number of records that have persistent identifiers.
     - returns the SPASE_id's of these records in a dictionary labeled by keys of the same name ("pub" and "PID")
@@ -255,7 +259,7 @@ def View(desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
     testObj = Links()
     # Add Code P here
     (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords()
+     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
     
