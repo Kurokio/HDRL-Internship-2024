@@ -52,6 +52,7 @@ def AccessRightsSep(AccessRights, printFlag):
                 else:
                     # if no desired URLs present
                     if not desired:
+                        #lines.append(RID + ", " + str(key))
                         url = ["No NASA Links"]
                         prodKey = [""]
                         
@@ -59,4 +60,5 @@ def AccessRightsSep(AccessRights, printFlag):
                 print(k + " was assigned to license")
                 print(str(url) + " was assigned to url")
                 print(str(prodKey) + " was assigned to prodKey")
+                  
     return license, url, prodKey
