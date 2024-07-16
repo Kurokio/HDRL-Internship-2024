@@ -167,27 +167,29 @@ class Links():
     SDAC_AL3 = SDAC_Intersect + AL3_Stmt
     SPDF_AL3 = SPDF_Intersect + AL3_Stmt
     
-    def allRecords(self):
+    def allRecords(self, conn):
         """Executes all SQLite SELECT statements that do not have a specified publisher and returns the lists.
         
+        :param conn: A connection to the desired database
+        :type conn: Connection object
         :return: The list of all SPASE records that match their specific criteria.
         :rtype: tuple"""
 
         # prints links for all records
         # Add Code L somewehere here
-        links = execution(self.totalStmt)
-        authors = execution(self.authorStmt)
-        publishers = execution(self.pubStmt)
-        pubYrs = execution(self.pubYrStmt)
-        datasetNames = execution(self.datasetNameStmt)
-        licenses = execution(self.licenseStmt)
-        urls = execution(self.urlStmt)
-        NASAurls = execution(self.NASAurlStmt)
-        PIDs = execution(self.PID_Stmt)
-        descriptions = execution(self.descStmt)
-        citations = execution(self.citationStmt)
+        links = execution(self.totalStmt, conn)
+        authors = execution(self.authorStmt, conn)
+        publishers = execution(self.pubStmt, conn)
+        pubYrs = execution(self.pubYrStmt, conn)
+        datasetNames = execution(self.datasetNameStmt, conn)
+        licenses = execution(self.licenseStmt, conn)
+        urls = execution(self.urlStmt, conn)
+        NASAurls = execution(self.NASAurlStmt, conn)
+        PIDs = execution(self.PID_Stmt, conn)
+        descriptions = execution(self.descStmt, conn)
+        citations = execution(self.citationStmt, conn)
         #citeWOPIDs = execution(self.citationWoPID_Stmt)
-        compliances = execution(self.complianceStmt)
+        compliances = execution(self.complianceStmt, conn)
         '''AL1 = execution(self.AL1_Stmt)
         AL2 = execution(self.AL2_Stmt)
         AL3 = execution(self.AL3_Stmt)
