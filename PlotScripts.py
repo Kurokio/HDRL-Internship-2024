@@ -1,8 +1,10 @@
-def FAIR_Chart():
+def FAIR_Chart(conn):
     """
     Executes a SQLite SELECT statement to collect all FAIR Scores and displays a bar chart showing the 
     number of records for each FAIR Score. This does so by using a NumPy array within a MatPlotLib function.
     
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :return: None
     """
     
@@ -17,7 +19,7 @@ def FAIR_Chart():
     scores = []
     # get all FAIR scores from TestResults
     stmt = "SELECT FAIR_Score FROM TestResults WHERE MostRecent = 'T'"
-    rows = execution(stmt,"multiple")
+    rows = execution(stmt, conn, "multiple")
     for row in rows:
         scores.append(row[0])
 
