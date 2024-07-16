@@ -1,5 +1,5 @@
 """ Function List:
-create_sqlite_database: Creates a new SQLite database 
+create_sqlite_database: Creates a new SQLite database or returns a connection to an existing one
 create_tables: Creates the MetadataEntries, MetadataSources, TestResults, and Records tables
 add_Metadata: Inserts values into the MetadataEntries table and returns its row number
 add_Sources: Inserts values into the MetadataSources table and returns its row number
@@ -33,13 +33,15 @@ def create_sqlite_database(filename):
 
 # add table to existing db
 
-def create_tables():
+def create_tables(conn):
     """
     Connects to the given SQLite database, creates a cursor object, and calls the executescript method 
     with the sql_statements argument. These changes are then committed which creates the MetadataEntries, 
     MetadataSources, TestResults, and Records tables in the specified database. This also displays error 
     messages if any arise.
     
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :return: None
     """
 
@@ -100,12 +102,12 @@ def create_tables():
         );""")
     # create a database connection, executes statement, and commits the changes to db
     try:
-        with sqlite3.connect('SPASE_Data.db') as conn:
-            cursor = conn.cursor()
-            for statement in sql_statements:
-                cursor.executescript(statement)
+        #with sqlite3.connect('SPASE_Data.db') as conn:
+        cursor = conn.cursor()
+        for statement in sql_statements:
+            cursor.executescript(statement)
 
-            conn.commit()
+        conn.commit()
     except sqlite3.Error as e:
         print(e)
 
@@ -207,7 +209,7 @@ def add_Records(conn, entry):
     return cur.lastrowid
 
 # executes given SQLite SELECT statement
-def execution(stmt, number = "single"):
+def execution(stmt, conn, number = "single"):
     """
     Connects to the given SQLite database, creates a cursor object, and calls the execute method 
     with the stmt argument. The number argument has default value of single, which will format the 
@@ -218,6 +220,8 @@ def execution(stmt, number = "single"):
     
     :param stmt: A string of the SQLite statement to be executed.
     :type stmt: String
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :param number: An string that formats the return based on how many items are being selected
     :type number: String
     :return: The list of the results from the SQLite statement
@@ -225,10 +229,10 @@ def execution(stmt, number = "single"):
     """
     # create a database connection, executes SELECT statement, and returns all the results
     try:
-        with sqlite3.connect("SPASE_Data.db") as conn:
-            cur = conn.cursor()
-            cur.execute(stmt)
-            rows = cur.fetchall()
+        #with sqlite3.connect("SPASE_Data.db") as conn:
+        cur = conn.cursor()
+        cur.execute(stmt)
+        rows = cur.fetchall()
     except sqlite3.Error as e:
         print(e)
     if number == "single":
@@ -237,26 +241,28 @@ def execution(stmt, number = "single"):
         return rows
     
 # executes given SQLite statement
-def executionALL(stmt):
+def executionALL(stmt, conn):
     """
     Connects to the given SQLite database, creates a cursor object, and calls the execute method 
     with the stmt argument. This also displays error messages if any arise.
     
     :param stmt: A string of the SQLite statement to be executed.
     :type stmt: String
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :return: None
     """
     # create a database connection and execute statement
     try:
-        with sqlite3.connect("SPASE_Data.db") as conn:
-            cur = conn.cursor()
-            cur.execute(stmt)
-            conn.commit()
+        #with sqlite3.connect("SPASE_Data.db") as conn:
+        cur = conn.cursor()
+        cur.execute(stmt)
+        conn.commit()
     except sqlite3.Error as e:
         print(e)
         
 # updates the TestResults column provided for all links that fulfill a certain test so they have a 1/"True"
-def TestUpdate(records, column):
+def TestUpdate(records, column, conn):
     """
     Iterates through the parameter records to set the value for each record in the column provided as 1.
     For each record, a SQLite UPDATE statement is made which is then passed to the executionALL function 
@@ -273,19 +279,20 @@ def TestUpdate(records, column):
         Stmt = f""" UPDATE TestResults
                             SET '{column}' = 1
                             WHERE SPASE_id = '{record}' """
-        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""")
-        executionALL(Stmt)
+        Record_id = execution(f""" SELECT rowNum FROM TestResults WHERE SPASE_id = '{record}';""", conn)
+        executionALL(Stmt, conn)
         #print(f"Updated a TestResults entry with the row number {Record_id}")
         #print("===========================================================================")
         
-def databaseInfo():
+def databaseInfo(conn):
     """
     Prints all table names and all the names of their associated columns
     
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :return: None
     """
     # print all table names and the names of their columns
-    conn = sqlite3.connect('SPASE_Data.db')
     res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
     for name in res.fetchall():
         print("The table " + name[0] + " has columns:")
@@ -297,7 +304,7 @@ def databaseInfo():
         print()
         
 # updates the TestResults column FAIRScore for all links to have their updated FAIR score
-def FAIRScorer(records):
+def FAIRScorer(records, conn):
     """
     Iterates through the has_x column names of the TestResults table to calculate the FAIR Score of all the records in
     the parameter. FAIR Score is calculated according to the algorithm described in the notebook. Once the FAIR score is 
@@ -305,11 +312,13 @@ def FAIRScorer(records):
     
     :param records: A list of all the links in table.
     :type records: list
+    :param conn: A connection to the desired database
+    :type conn: Connection object
     :return: None
     """
-    conn = sqlite3.connect('SPASE_Data.db')
+    #conn = sqlite3.connect('SPASE_Data.db')
     # collect all column names
-    cols = execution("SELECT name FROM PRAGMA_TABLE_INFO('TestResults')")
+    cols = execution("SELECT name FROM PRAGMA_TABLE_INFO('TestResults')", conn)
     # get only the has_x columns
     FAIR_Date = cols[3]
     cols = cols[5:16]
@@ -326,7 +335,7 @@ def FAIRScorer(records):
                 #print("has_url skipped!")
                 continue
             else:
-                val = execution("SELECT " + col + f" FROM TestResults WHERE SPASE_id = '{record}' ")
+                val = execution("SELECT " + col + f" FROM TestResults WHERE SPASE_id = '{record}' ", conn)
                 val = val[0]
                 if (1 == val):
                     #print(f"{col} had value 1, adding 1 to FAIR score")
@@ -338,7 +347,7 @@ def FAIRScorer(records):
         #print(record + " has score of " + str(score) + ", updating this in the table")
         
         # get value of FAIR_ScoreDate
-        DateVal = execution("SELECT " + FAIR_Date + f" FROM TestResults WHERE SPASE_id = '{record}' ")
+        DateVal = execution("SELECT " + FAIR_Date + f" FROM TestResults WHERE SPASE_id = '{record}' ", conn)
         DateVal = DateVal[0]
         
         # if FAIR_ScoreDate nonempty = not first time record was passed after default values assigned by main function
@@ -384,20 +393,20 @@ def FAIRScorer(records):
                                 OLD.has_compliance,
                                 OLD.Errors);
                         END;"""
-            executionALL(Stmt)
+            executionALL(Stmt, conn)
 
             # updating the columns in the table with new score and date
             Stmt = f""" UPDATE TestResults
                                 SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
                                 WHERE SPASE_id = '{record}' """
-            executionALL(Stmt)
+            executionALL(Stmt, conn)
         # if FAIR_ScoreDate is empty = first time running after default values assigned in main function
         # replace default value row with fully populated row
         elif not DateVal:
             # drop trigger that makes new rows
-            executionALL("DROP TRIGGER IF EXISTS FAIR_Update")
+            executionALL("DROP TRIGGER IF EXISTS FAIR_Update", conn)
             # updating the columns in the table with new score and date
             Stmt = f""" UPDATE TestResults
                                 SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
                                 WHERE SPASE_id = '{record}' """
-            executionALL(Stmt)
+            executionALL(Stmt, conn)
