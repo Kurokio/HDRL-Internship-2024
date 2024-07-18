@@ -120,6 +120,6 @@ def MetadataBarChart(conn, records, percent = False):
         ax.bar_label(chart)
         plt.annotate(f"All citation fields: {counts[9]}", xy=(.05,.95), xycoords='axes fraction')
         plt.annotate(f"DCAT3-US Compliance: {counts[10]}", xy=(.05,.9), xycoords='axes fraction')
-    ax.suptitle(f"{createdDate}, Total Records: {total}")
-    ax.set_title("DisplayData and NumericalData Records in the NASA SPASE GitHub")
+    plt.suptitle(f"{createdDate}, Total Records: {total}")
+    ax.set_title("Records in the NASA SPASE GitHub")
     #fig.tight_layout()
