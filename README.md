@@ -30,11 +30,14 @@ Contributors and collaborators are welcome. Acceptable contributions can be docu
 
 Make sure to be nice when contributing and submitting commit messages, as this is a project developed by an intern that is still learning.
 
+There will likely be minimal attention given to this project after 2024-08-12, but I will give it my best effort.
+
 ## Credits
 Thanks to the following people who helped make this project a reality:
 - <a href="https://github.com/rebeccaringuette" target="_blank">@rebeccaringuette</a>
 
 ## Contact
+Contact me via LinkedIn or by using the email on my ORCiD page.
 Zach Boquet - <a href="https://www.linkedin.com/in/zach-boquet-62a996254/" target="_blank">LinkedIn</a> - <a href="https://orcid.org/0009-0005-1686-262X" target="_blank">ORCiD</a>
 
 ## License
