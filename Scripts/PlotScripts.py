@@ -51,40 +51,47 @@ def FAIR_Chart(conn):
     ax.yaxis.set_ticks(np.arange(start, end, 400))
     ax.set_ylim(0.1, 1900)
     ax.bar_label(chart)
-    plt.annotate(f"Total records: {total}", xy=(.1,.9), xycoords='axes fraction')
-    plt.annotate(f"Average FAIR score: {AvgScore}", xy=(.1,.8), xycoords='axes fraction')
-    ax.set_title(f"Date Created: {createdDate}")
+    plt.annotate(f"Average FAIR score: {AvgScore}", xy=(.05,.9), xycoords='axes fraction')
+    ax.set_title(f"{createdDate}, Total records: {total}")
     fig.tight_layout()
 
-def MetadataBarChart(conn, records):
+def MetadataBarChart(conn, records, percent = False):
     # takes connection obj and dictionary containing records of all types
     
     counts = []
     
     # iterate thru key value pairs to get labels and counts
-    types = list(records.keys())
+    types = ['Author', 'Publisher', 'Publication Year', 'Dataset Name', 
+             'CC0 License', 'URL', 'NASA URL', 'Persistent Identifier', 'Description']
     lists = records.values()
     for kind in lists:
         counts.append(len(kind))
-    # skip all type
-    types = types[1:]
-    types[4] = 'CC0 license'
+    # skip all type and adjust license title
     counts = counts[1:]
         
-    
     # assemble into Numpy array
     np_types = np.array(types)
     print(np_types)
-    np_counts = np.array(counts)
+    np_counts = np.array(counts[:9])
     print(np_counts)
-    
-    # create color distinctions between bars that are part of compliance, citation, both, none, etc
-    colors = ['tab:orange', 'tab:orange', 'tab:orange', 'tab:orange', 'tab:blue', 'tab:blue', 
-              'tab:blue', 'tab:blue', 'tab:blue', 'tab:blue', 'tab:blue']
-    # 4, 8, 9 need dashed
     
     # get total number of records
     total = len(records["all"])
+    
+    # calculate percentages
+    if percent:
+        percentages = []
+        for count in counts:
+            per = (count/total)*100
+            percentages.append(round(per))
+        np_percentages = np.array(percentages[:9])
+    
+    # create color distinctions between bars that are part of citation and none
+    colors = ['tab:orange', 'tab:orange', 'tab:orange', 'tab:orange', 'tab:blue', 'tab:blue', 
+              'tab:blue', 'tab:blue', 'tab:blue']
+    # make bars needed for compliance have dashes
+    # 4, 8, 9 need dashed
+    patterns = ['','','','/','','','','/','/']
     
     # get the date
     createdDate = date.today()
@@ -92,13 +99,27 @@ def MetadataBarChart(conn, records):
     # create chart
     #plt.rc('font', size = 15)
     fig, ax = plt.subplots()
-    chart = ax.bar(np_types, np_counts, align='center', color = colors)
-    plt.xticks(range(len(np_types)), np_types, rotation = 'vertical')
+    chart = ax.bar(np_types, np_counts, align='center', color = colors, hatch = patterns)
+    plt.xticks(range(len(np_types)), np_types, rotation = 45, ha = 'right')
     ax.set_xlabel("Metadata Fields")
     ax.set_ylabel("Number of Records")
     start, end = ax.get_ylim()
     ax.yaxis.set_ticks(np.arange(start, end, 1000))
-    ax.bar_label(chart)
-    #plt.annotate(f"Total records: {total}", xy=(.1,.9), xycoords='axes fraction')
-    ax.set_title(f"Date Created: {createdDate}")
+    ax.set_ylim(0.1, 3800)
+    if percent:
+        i = 0
+        for bar in chart:
+            width = bar.get_width()
+            height = bar.get_height()
+            x, y = bar.get_xy()
+            plt.text(x + width/2, y + height*1.01, str(np_percentages[i]) + '%', ha = 'center')
+            i += 1
+        plt.annotate(f"All citation fields: {percentages[9]}%", xy=(.05,.95), xycoords='axes fraction')
+        plt.annotate(f"DCAT3-US Compliance: {percentages[10]}%", xy=(.05,.9), xycoords='axes fraction')
+    else:
+        ax.bar_label(chart)
+        plt.annotate(f"All citation fields: {counts[9]}", xy=(.05,.95), xycoords='axes fraction')
+        plt.annotate(f"DCAT3-US Compliance: {counts[10]}", xy=(.05,.9), xycoords='axes fraction')
+    ax.suptitle(f"{createdDate}, Total Records: {total}")
+    ax.set_title("DisplayData and NumericalData Records in the NASA SPASE GitHub")
     #fig.tight_layout()
