@@ -205,7 +205,7 @@ def Create(folder, conn, printFlag = False):
     TestUpdate(complianceRecords, "has_compliance", conn)
     
     # Add Code Q here
-def View(conn, desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
+def View(conn, allRecords = True, desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
                     "url","NASAurl", "PID", "description", "citation", "compliance"]):
     """
     Prints the number of records that meet each test criteria provided as well as return those SPASE_id's
@@ -255,18 +255,25 @@ def View(conn, desired = ["all", "author", "pub", "pubYr", "datasetName", "licen
     # Add Code R here
     desiredRecords = {"all": [], "author": [], "pub": [], "pubYr": [], "datasetName": [], "license": [], "url": [],
                       "NASAurl": [], "PID": [], "description": [], "citation": [], "compliance": []}
-    
     testObj = Links()
-    # Add Code P here
-    (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
+    if allRecords:
+        # Add Code P here
+        (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
+         PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
+    else:
+        (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
+         PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.NASA_URL_Records(conn)
+        
     #testObj.SDAC_Records()
     #testObj.SPDF_Records()
     
     # print counts of SPASE records that answer analysis questions
     for record in desired:
         if record == "all":
-            print("There are " + str(len(records)) + " records total.")
+            if allRecords:
+                print("There are " + str(len(records)) + " records total.")
+            else:
+                print("There are " + str(len(records)) + " records with NASA URLs.")
             desiredRecords["all"] = records
         elif record == "author":
             print("There are " + str(len(authorRecords)) + " records with an author.")

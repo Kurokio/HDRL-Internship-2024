@@ -167,6 +167,16 @@ class Links():
     SDAC_AL3 = SDAC_Intersect + AL3_Stmt
     SPDF_AL3 = SPDF_Intersect + AL3_Stmt
     
+    NASAauthorStmt = NASAurlStmt + ' INTERSECT ' + authorStmt
+    NASApubStmt = NASAurlStmt + ' INTERSECT ' + pubStmt
+    NASApubYrStmt = NASAurlStmt + ' INTERSECT ' + pubYrStmt
+    NASAdatasetNameStmt = NASAurlStmt + ' INTERSECT ' + datasetNameStmt
+    NASAlicenseStmt = NASAurlStmt + ' INTERSECT ' + licenseStmt
+    NASA_PID_Stmt = NASAurlStmt + ' INTERSECT ' + PID_Stmt
+    NASAdescStmt = NASAurlStmt + ' INTERSECT ' + descStmt
+    NASAcitationStmt = NASAurlStmt = ' INTERSECT ' + citationStmt
+    NASAcomplianceStmt = NASAurlStmt = ' INTERSECT ' + complianceStmt
+    
     def allRecords(self, conn):
         """Executes all SQLite SELECT statements that do not have a specified publisher and returns the lists.
         
@@ -239,3 +249,27 @@ class Links():
         execution(self.SPDF_AL1, "with at least one desired field published by SPDF")
         execution(self.SPDF_AL2, "with at least two desired fields published by SPDF")
         execution(self.SPDF_AL3, "with at least three desired fields published by SPDF")
+        
+    def NASA_URL_Records(self, conn):
+        """Executes all SQLite SELECT statements that have NASA URLs and returns the lists.
+        
+        :param conn: A connection to the desired database
+        :type conn: Connection object
+        :return: The list of all SPASE records that match their specific criteria.
+        :rtype: tuple"""
+
+        # prints links for all records w NASA URLs
+        links = execution(self.NASAurlStmt, conn)
+        authors = execution(self.NASAauthorStmt, conn)
+        publishers = execution(self.NASApubStmt, conn)
+        pubYrs = execution(self.NASApubYrStmt, conn)
+        datasetNames = execution(self.NASAdatasetNameStmt, conn)
+        licenses = execution(self.NASAlicenseStmt, conn)
+        urls = links
+        NASAurls = urls
+        PIDs = execution(self.NASA_PID_Stmt, conn)
+        descriptions = execution(self.NASAdescStmt, conn)
+        citations = execution(self.NASAcitationStmt, conn)
+        compliances = execution(self.NASAcomplianceStmt, conn)
+        return (links, authors, publishers, pubYrs, datasetNames, licenses, urls, NASAurls, PIDs,
+                descriptions, citations, compliances)
