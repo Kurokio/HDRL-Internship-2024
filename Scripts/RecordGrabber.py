@@ -2,6 +2,7 @@
 allRecords: Executes SQLite SELECT statements for all records in table
 SDAC_Records: Executes SQLite SELECT statements for records that are published by SDAC
 SPDF_Records: Executes SQLite SELECT statements for records that are published by SPDF
+NASA_URL_Records: Executes SQLite SELECT statements for records in table that have NASA URLs
 """
 
 """If additional tests were requested, simply create more string variables which contain the
@@ -30,7 +31,7 @@ class Links():
     licenseStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE license LIKE "%cc0%" 
                         OR license LIKE "%Creative Commons Zero v1.0 Universal%" ;"""
     urlStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE url NOT LIKE "" ;"""
-    NASAurlStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE url NOT LIKE "" AND url!="No NASA Links";"""
+    NASAurlStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE (url NOT LIKE "" AND url!="No NASA Links");"""
 
     PID_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE PID NOT LIKE "" ;"""
     descStmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries WHERE description NOT LIKE "" ;"""
@@ -120,7 +121,7 @@ class Links():
     # all records with specified publisher
     SDAC_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SDAC" OR publisher LIKE 
-                                "%Solar Data Analysis Center)"""
+                                "%Solar Data Analysis Center")"""
     SPDF_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries 
                         WHERE (publisher LIKE "%SPDF" OR publisher LIKE 
                                 "%Space Physics Data Facility")"""
@@ -167,15 +168,19 @@ class Links():
     SDAC_AL3 = SDAC_Intersect + AL3_Stmt
     SPDF_AL3 = SPDF_Intersect + AL3_Stmt
     
-    NASAauthorStmt = NASAurlStmt + ' INTERSECT ' + authorStmt
-    NASApubStmt = NASAurlStmt + ' INTERSECT ' + pubStmt
-    NASApubYrStmt = NASAurlStmt + ' INTERSECT ' + pubYrStmt
-    NASAdatasetNameStmt = NASAurlStmt + ' INTERSECT ' + datasetNameStmt
-    NASAlicenseStmt = NASAurlStmt + ' INTERSECT ' + licenseStmt
-    NASA_PID_Stmt = NASAurlStmt + ' INTERSECT ' + PID_Stmt
-    NASAdescStmt = NASAurlStmt + ' INTERSECT ' + descStmt
-    NASAcitationStmt = NASAurlStmt = ' INTERSECT ' + citationStmt
-    NASAcomplianceStmt = NASAurlStmt = ' INTERSECT ' + complianceStmt
+    # statements to retrieve records with each metadata field that also have NASA URLs
+    NASAurlIntersect = NASAurlStmt.replace(";", '')
+    NASAurlIntersect += ' INTERSECT '
+    
+    NASAauthorStmt = NASAurlIntersect + authorStmt
+    NASApubStmt = NASAurlIntersect + pubStmt
+    NASApubYrStmt = NASAurlIntersect + pubYrStmt
+    NASAdatasetNameStmt = NASAurlIntersect + datasetNameStmt
+    NASAlicenseStmt = NASAurlIntersect + licenseStmt
+    NASA_PID_Stmt = NASAurlIntersect + PID_Stmt
+    NASAdescStmt = NASAurlIntersect + descStmt
+    NASAcitationStmt = NASAurlIntersect + citationStmt
+    NASAcomplianceStmt = NASAurlIntersect + complianceStmt
     
     def allRecords(self, conn):
         """Executes all SQLite SELECT statements that do not have a specified publisher and returns the lists.

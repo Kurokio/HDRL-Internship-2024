@@ -205,7 +205,7 @@ def Create(folder, conn, printFlag = False):
     TestUpdate(complianceRecords, "has_compliance", conn)
     
     # Add Code Q here
-def View(conn, allRecords = True, desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
+def View(conn, All = True, desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
                     "url","NASAurl", "PID", "description", "citation", "compliance"]):
     """
     Prints the number of records that meet each test criteria provided as well as return those SPASE_id's
@@ -214,6 +214,9 @@ def View(conn, allRecords = True, desired = ["all", "author", "pub", "pubYr", "d
     
     :param conn: A connection to the desired database
     :type conn: Connection object
+    :param All: A boolean determining if the records returned will be from the set containing
+                all records present in the database or only those with NASA URLs.
+    :type All: Boolean
     :param desired: A list of Strings which determine the kind of records whose counts are printed and whose
                         SPASE_id's are assigned to the dictionary returned. The default value is all kinds.
     :param type: list
@@ -244,9 +247,9 @@ def View(conn, allRecords = True, desired = ["all", "author", "pub", "pubYr", "d
     - returns the SPASE_id's of these records in a dictionary labeled by key of the same name ("all")
     - assigns the returned dictionary to records. 
     
-    records = View(conn, desired = ['pub', 'PID']):
-    - prints the number of records that have publishers
-    - prints the number of records that have persistent identifiers.
+    records = View(conn, All = False, desired = ['pub', 'PID']):
+    - prints the number of records that have publishers and have NASA URLs
+    - prints the number of records that have persistent identifiers and NASA URLs.
     - returns the SPASE_id's of these records in a dictionary labeled by keys of the same name ("pub" and "PID")
     - assigns the returned dictionary to records. 
     """
@@ -256,10 +259,12 @@ def View(conn, allRecords = True, desired = ["all", "author", "pub", "pubYr", "d
     desiredRecords = {"all": [], "author": [], "pub": [], "pubYr": [], "datasetName": [], "license": [], "url": [],
                       "NASAurl": [], "PID": [], "description": [], "citation": [], "compliance": []}
     testObj = Links()
-    if allRecords:
+    # returns records with each metadata field with no restrictions
+    if All:
         # Add Code P here
         (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
          PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
+    # returns records with each metadata field that have NASA URLs
     else:
         (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
          PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.NASA_URL_Records(conn)
@@ -270,7 +275,7 @@ def View(conn, allRecords = True, desired = ["all", "author", "pub", "pubYr", "d
     # print counts of SPASE records that answer analysis questions
     for record in desired:
         if record == "all":
-            if allRecords:
+            if All:
                 print("There are " + str(len(records)) + " records total.")
             else:
                 print("There are " + str(len(records)) + " records with NASA URLs.")
