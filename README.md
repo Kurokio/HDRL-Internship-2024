@@ -19,6 +19,10 @@ git clone -b master --single-branch --depth=1 https://github.com/hpde/NASA
 ```python
 git clone https://github.com/Kurokio/HDRL-Internship-2024
 ```
+3. In the directory directly above the HDRL-Internship-2024 directory, install the Scripts module.
+```python
+pip install -e ./HDRL-Internship-2024
+```
 
 ## Usage
 Follow the notebook "HowToUse" which walks you through step-by-step how to do the actions listed above. 
