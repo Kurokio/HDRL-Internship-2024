@@ -1,9 +1,22 @@
-from SPASE_Scraper_Script import SPASE_Scraper
-from DatalinkSep import AccessRightsSep
+from .SPASE_Scraper_Script import SPASE_Scraper
+from .DatalinkSep import AccessRightsSep
 
 # prints metadata for fields specified in the record provided
 def MetadataPrinter(record, fields = ["ResourceID", "author","pub", "pubYr", "datasetName", "description",
                                       "PID", "license", "url", "prodKey", "version", "ReleaseDate"]):
+    """
+    Takes a SPASE id and fields desired and prints the values for these fields found by the scraping function.
+    The default argument for fields is everything returned by the SPASE_Scraper_Script. This function is especially
+    helpful in acquiring the description for a given SPASE record, as the actual value for this field is not
+    stored in the database.
+    
+    :param record: SPASE_id of the SPASE record the user wants data for
+    :type record: String
+    :param fields: A list of all the metadata fields' data the user wishes to be printed
+    :type fields: list
+    :return: None
+    """
+    
     # make recordPath from SPASE_id provided
     before, sep, after = record.partition('/')
     recordPath = '/home/jovyan' + after + '.xml'
