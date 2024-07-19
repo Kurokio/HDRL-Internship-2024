@@ -1,6 +1,6 @@
 import setuptools
 
-with open(README.md, "r") as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -14,9 +14,9 @@ setuptools.setup(
     url = 'https://github.com/Kurokio/HDRL-Internship-2024',
     packages = setuptools.find_packages(),
     classifiers = [
-        Programming Language :: Python :: 3,
-        Operating System :: OS Independent,
-        License :: OSI Approved,
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "License :: OSI Approved",
     ],
     license = 'Apache-2.0'
 )
