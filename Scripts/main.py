@@ -1,46 +1,58 @@
 """ Function List:
-Create: Scrapes all desired metadata present in the given directory and creates and populates the 
-        MetadataEntries, MetadataSources, Records, and TestResults tables.
-View: Prints the count of and returns the SPASE_id's of the records desired.
+Create: Scrapes all desired metadata present in the given
+            directory and creates and populates the
+            MetadataEntries, MetadataSources, Records,
+            and TestResults tables.
+View: Prints the count of and returns the SPASE_id's of
+        the records desired.
 """
 
-def Create(folder, conn, printFlag = False):
+
+def Create(folder, conn, printFlag=False):
     """
-    Scrapes all records that are found in the directory given for the desired metadata. Creates the MetadataEntries, 
-    MetadataSources, Records, and TestResults tables and populates them using the data scraped for each record. 
-    Populates the TestResult table with default values to be overwritten by the call to the FAIRScorer function
-    in the notebook.
-    
-    :param folder: The absolute file path of the SPASE record/directory containing the record(s) the user wants scraped.
+    Scrapes all records that are found in the directory given
+    for the desired metadata. Creates the MetadataEntries,
+    MetadataSources, Records, and TestResults tables and populates
+    them using the data scraped for each record. Populates the
+    TestResult table with default values to be overwritten by
+    the call to the FAIRScorer function in the notebook.
+
+    :param folder: The absolute file path of the SPASE record/directory
+                        containing the record(s) the user wants scraped.
     :type folder: String
     :param conn: A connection to the desired database
     :type conn: Connection object
-    :param printFlag: A boolean determining if the user wants to print more details of what the function is doing.
+    :param printFlag: A boolean determining if the user wants to print
+                        more details of what the function is doing.
     :type printFlag: Boolean
     :return: None
     """
     # import functions from .py files and from built-in packages
-    import pprint, sqlite3
+    import pprint
+    import sqlite3
     from .SPASE_Scraper_Script import SPASE_Scraper
     from .PathGrabber import getPaths
-    from .SQLiteFun import (create_tables, add_Metadata, add_Sources, add_Records, execution, executionALL,
-                          add_TestResults, TestUpdate, create_sqlite_database)
+    from .SQLiteFun import (create_tables, add_Metadata, add_Sources,
+                            add_Records, execution, executionALL,
+                            add_TestResults, TestUpdate,
+                            create_sqlite_database)
     from .DatalinkSep import AccessRightsSep
     from .RecordGrabber import Links
-    
+
     # list that holds paths returned by PathGrabber
     SPASE_paths = []
 
     # get user input and extract all SPASE records
-    #print("Enter root folder you want to search")
-    #folder = input()
+    # print("Enter root folder you want to search")
+    # folder = input()
     print("You entered " + folder)
     SPASE_paths = getPaths(folder, SPASE_paths)
     if printFlag:
-        print("The number of records is "+ str(len(SPASE_paths)))
+        print("The number of records is " + str(len(SPASE_paths)))
         print("The SPASE records found are:")
         print(SPASE_paths)
-        print("======================================================================================================")
+        print("""======================================================\
+              ================================================""")
 
     # list that holds SPASE records already checked
     searched = []
@@ -49,8 +61,10 @@ def Create(folder, conn, printFlag = False):
     for record in SPASE_paths:
         # scrape metadata for each record
         if record not in searched:
-            (ResourceID, ResourceIDField, author, authorField, authorRole, pub, pubField, pubDate, pubDateField, datasetName, 
-             datasetNameField, desc, descField, PID, PIDField, AccessRights, licenseField, datalinkField, 
+            (ResourceID, ResourceIDField, author, authorField, authorRole,
+             pub, pubField, pubDate, pubDateField, datasetName,
+             datasetNameField, desc, descField, PID, PIDField,
+             AccessRights, licenseField, datalinkField,
              version, ReleaseDate) = SPASE_Scraper(record)
 
             # list that holds required fields
@@ -58,46 +72,57 @@ def Create(folder, conn, printFlag = False):
 
             # add record to searched
             searched.append(record)
-            
+
             # grab only year from the date
             pubYear = pubDate[0:4]
-            
+
             # concatenate author and authorRole into single strings
-             # add Code E here
+            # add Code E here
             author = ", ".join(author)
             authorRole = ", ".join(authorRole)
 
             if printFlag:
-                print("The ResourceID is " + ResourceID + " which was obtained from " + ResourceIDField)
-                print("The author(s) are " + author + " who are " + authorRole + " which was obtained from " + authorField)
+                print("""The ResourceID is " + ResourceID + " which was\
+                        obtained from """ + ResourceIDField)
+                print("The author(s) are " + author + " who are"
+                      + authorRole + "which was obtained from " + authorField)
                 # add Code F here
-                print("The publication year is " + pubYear + " which was obtained from " + pubDateField)
-                print("The publisher is " + pub + " which was obtained from " + pubField)
-                print("The dataset name is " + datasetName + " which was obtained from " + datasetNameField)
-                print("The description is " + desc + " which was obtained from " + descField)
-                print("The persistent identifier is " + PID + " which was obtained from " + PIDField)
-                print("The URLs with their associated product keys obtained from " + datalinkField + """ and their 
-                      license(s) obtained from """ + licenseField + " are: ")
+                print("The publication year is " + pubYear + """ which was \
+                        obtained from """ + pubDateField)
+                print("The publisher is " + pub + """ which was
+                        obtained from """ + pubField)
+                print("The dataset name is " + datasetName +
+                      "which was obtained from " + datasetNameField)
+                print("The description is " + desc + """ which was
+                        obtained from """ + descField)
+                print("The persistent identifier is " + PID + """ which was
+                        obtained from """ + PIDField)
+                print("""The URLs with their associated product keys \
+                        obtained from """ + datalinkField + """ and their
+                        license(s) obtained from """ + licenseField + " are: ")
                 pprint.pprint(AccessRights)
 
-            # separate license, url, and product keys from AccessRights to store in db
+            # separate license, url, and product keys from AccessRights
+            #    to store in db
             license, url, prodKey = AccessRightsSep(AccessRights, printFlag)
 
             # add tables to existing database
             create_tables(conn)
 
             # insert metadata entries into table
-            i = 0        
+            i = 0
             try:
-                #with sqlite3.connect('SPASE_Data.db') as conn:                
+                # with sqlite3.connect('SPASE_Data.db') as conn:
                 # add or update entry to MetadataEntries
                 for urls in url:
                     # Add Code G, Code H, and Code I in this statement
                     UpdateStmt = f''' INSERT INTO MetadataEntries
                                         (SPASE_id,author,authorRole,publisher,publicationYr,datasetName,
                                         license,URL,prodKey,description,PID)
-                                    VALUES ("{ResourceID}","{author}","{authorRole}","{pub}","{pubYear}",
-                                    "{datasetName}","{license}","{url[i]}","{prodKey[i]}","description found","{PID}")
+                                    VALUES ("{ResourceID}","{author}",
+                                    "{authorRole}","{pub}","{pubYear}","{datasetName}",
+                                    "{license}","{url[i]}","{prodKey[i]}",
+                                    "description found","{PID}")
                                     ON CONFLICT (SPASE_id, URL, prodKey) DO
                                     UPDATE
                                     SET
@@ -116,10 +141,13 @@ def Create(folder, conn, printFlag = False):
                     i += 1
                 # add or update Records entry
                 before, sep, after = ResourceID.partition('NASA')
-                compURL =  "https://github.com/hpde/NASA/blob/master" + after + ".xml"
+                compURL = """https://github.com/hpde/NASA/blob/master
+                            """ + after + ".xml"
                 UpdateStmt = f''' INSERT INTO Records
-                                        (SPASE_id, SPASE_Version,LastModified,SPASE_URL)
-                                    VALUES ("{ResourceID}","{version}","{ReleaseDate}","{compURL}")
+                                        (SPASE_id, SPASE_Version,
+                                            LastModified,SPASE_URL)
+                                    VALUES ("{ResourceID}","{version}","{ReleaseDate}",
+                                            "{compURL}")
                                     ON CONFLICT (SPASE_id) DO
                                     UPDATE
                                     SET
