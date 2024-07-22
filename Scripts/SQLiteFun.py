@@ -396,10 +396,19 @@ def FAIRScorer(records, conn):
             executionALL(Stmt, conn)
 
             # updating the columns in the table with new score and date
+            # save FAIR Score before UPDATE
+            Stmt = f""" SELECT FAIR_Score FROM TestResults WHERE (SPASE_id = '{record}' AND MostRecent = 'T') """
+            OldScore = execution(Stmt, conn)
+            OldScore = OldScore[0]
+            # do update
             Stmt = f""" UPDATE TestResults
                                 SET (FAIR_Score, FAIR_ScoreDate, MostRecent) = ({score},datetime('now'),'T')
                                 WHERE SPASE_id = '{record}' """
             executionALL(Stmt, conn)
+            # if new FAIR Score < Old, then printout message along w ResourceID and FAIR Scores
+            if score < OldScore:
+                print(f"Record {record} has decreased in FAIR Score from {OldScore} to {score}.")
+            
         # if FAIR_ScoreDate is empty = first time running after default values assigned in main function
         # replace default value row with fully populated row
         elif not DateVal:
