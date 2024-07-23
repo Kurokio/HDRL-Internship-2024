@@ -146,34 +146,41 @@ def Create(folder, conn, printFlag=False):
                 UpdateStmt = f''' INSERT INTO Records
                                         (SPASE_id, SPASE_Version,
                                             LastModified,SPASE_URL)
-                                    VALUES ("{ResourceID}","{version}","{ReleaseDate}",
-                                            "{compURL}")
+                                    VALUES ("{ResourceID}","{version}",
+                                            "{ReleaseDate}","{compURL}")
                                     ON CONFLICT (SPASE_id) DO
                                     UPDATE
                                     SET
                                         SPASE_version = excluded.SPASE_version,
                                         LastModified = excluded.LastModified,
                                         SPASE_URL = excluded.SPASE_URL; '''
-                executionALL(UpdateStmt, conn)                    
+                executionALL(UpdateStmt, conn)
                 # add or update Source record
                 # Code U, Code V, and Code W here
                 UpdateStmt = f''' INSERT INTO MetadataSources
                                         (SPASE_id,author_source,publisher_source,
                                         publication_yr_source,datasetName_source,license_source,
                                         datalink_source,description_source,PID_source)
-                                    VALUES ("{ResourceID}","{authorField}","{pubField}",
-                                            "{pubDateField}","{datasetNameField}","{licenseField}",
+                                    VALUES ("{ResourceID}","{authorField}",
+                                            "{pubField}","{pubDateField}",
+                                            "{datasetNameField}","{licenseField}",
                                             "{datalinkField}","{descField}","{PIDField}")
                                     ON CONFLICT (SPASE_id) DO
                                     UPDATE
                                     SET
                                         author_source = excluded.author_source,
-                                        publisher_source = excluded.publisher_source,
-                                        publication_yr_source = excluded.publication_yr_source,
-                                        datasetName_source = excluded.datasetName_source,
-                                        license_source = excluded.license_source,
-                                        datalink_source = excluded.datalink_source,
-                                        description_source = excluded.description_source,
+                                        publisher_source =
+                                        excluded.publisher_source,
+                                        publication_yr_source =
+                                        excluded.publication_yr_source,
+                                        datasetName_source =
+                                        excluded.datasetName_source,
+                                        license_source =
+                                        excluded.license_source,
+                                        datalink_source =
+                                        excluded.datalink_source,
+                                        description_source =
+                                        excluded.description_source,
                                         PID_source = excluded.PID_source; '''
                 executionALL(UpdateStmt, conn)
 
@@ -181,23 +188,28 @@ def Create(folder, conn, printFlag=False):
                 print(e)
 
             if printFlag:
-                print("======================================================================================================")
+                print("""=================================================\
+                      =====================================================""")
 
         else:
             continue
-            
+
     # collects SPASE_id's of records that answer analysis questions
     testObj = Links()
     # Add Code N here
-    (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-     PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
-    #testObj.SDAC_Records()
-    #testObj.SPDF_Records()
-    TestResultRecords = execution("SELECT DISTINCT(SPASE_id) FROM TestResults", conn)
+    (records, authorRecords, pubRecords, pubYrRecords,
+     datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords,
+     PIDRecords, descriptionRecords, citationRecords,
+     complianceRecords) = testObj.allRecords(conn)
+    # testObj.SDAC_Records()
+    # testObj.SPDF_Records()
+    TestResultRecords = execution("""SELECT DISTINCT(SPASE_id)
+                            FROM TestResults""", conn)
 
-    # create the table with 0 as default for all, passing all records to the first insert call
+    # create the table with 0 as default for all,
+    #    passing all records to the first insert call
     try:
-        #with sqlite3.connect('SPASE_Data.db') as conn:
+        # with sqlite3.connect('SPASE_Data.db') as conn:
         k = 0
         for record in records:
             # if it is not a new SPASE Record
@@ -206,21 +218,23 @@ def Create(folder, conn, printFlag=False):
             # if it is a new SPASE record
             else:
                 # Add Code J to this assignment statement
-                Test = (record,0,"","",0,0,0,0,0,0,0,0,0,0,0,"")
+                Test = (record, 0, "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
                 Record_id = add_TestResults(conn, Test)
                 if printFlag:
-                    print(f'Created a TestResults entry with the row number {Record_id}')
+                    print(f"""Created a TestResults entry with \
+                            the row number {Record_id}""")
                 elif k == 0:
                     print("Creating TestResults entries")
             k += 1
 
     except sqlite3.Error as e:
-                print(e)
+        print(e)
 
-    # iterate thru lists one by one and update column for each record if in the list (if record in author, has_author = 1)
+    # iterate thru lists one by one and update column for each
+    #   record if in the list (if record in author, has_author = 1)
     # UPDATE stmt for each test
     # Add Code O here
-    TestUpdate(authorRecords, "has_author", conn)    
+    TestUpdate(authorRecords, "has_author", conn)
     TestUpdate(pubRecords, "has_pub", conn)
     TestUpdate(pubYrRecords, "has_pubYr", conn)
     TestUpdate(datasetNameRecords, "has_datasetName", conn)
@@ -231,30 +245,41 @@ def Create(folder, conn, printFlag=False):
     TestUpdate(descriptionRecords, "has_desc", conn)
     TestUpdate(citationRecords, "has_citation", conn)
     TestUpdate(complianceRecords, "has_compliance", conn)
-    
-    # Add Code Q here
-def View(conn, All = True, desired = ["all", "author", "pub", "pubYr", "datasetName", "license",
-                    "url","NASAurl", "PID", "description", "citation", "compliance"]):
+
+    # Add Code Q below
+
+
+def View(conn, All=True, desired=["all", "author", "pub",
+                                  "pubYr", "datasetName", "license",
+                                  "url", "NASAurl", "PID",
+                                  "description", "citation", "compliance"]):
     """
-    Prints the number of records that meet each test criteria provided as well as return those SPASE_id's
-    to the caller in the form of a dictionary. The keys are the Strings passed as parameters and the
-    values are the list of SPASE_id's that fulfill that test.
-    
+    Prints the number of records that meet each test criteria
+    provided as well as return those SPASE_id's to the caller
+    in the form of a dictionary. The keys are the Strings passed
+    as parameters and the values are the list of SPASE_id's
+    that fulfill that test.
+
     :param conn: A connection to the desired database
     :type conn: Connection object
-    :param All: A boolean determining if the records returned will be from the set containing
-                all records present in the database or only those with NASA URLs.
+    :param All: A boolean determining if the records returned will be from
+                the set containing all records present in the database or
+                only those with NASA URLs.
     :type All: Boolean
-    :param desired: A list of Strings which determine the kind of records whose counts are printed and whose
-                        SPASE_id's are assigned to the dictionary returned. The default value is all kinds.
+    :param desired: A list of Strings which determine the kind of records
+                    whose counts are printed and whose SPASE_id's are
+                    assigned to the dictionary returned. The default value
+                    is all kinds.
     :param type: list
-    :return: A dictionary containing lists of all records that fulfill certain test criteria as values.
+    :return: A dictionary containing lists of all records that fulfill
+                certain test criteria as values.
     :rtype: dictionary
-    
+
     Method Calls:
-    
+
     records = View(conn):
-    - prints the number of (distinct) records that are present in the MetdataEntries table
+    - prints the number of (distinct) records that are present in the
+        MetdataEntries table
     - prints number of records that have authors
     - prints number of records that have publishers
     - prints number of records that have publication years
@@ -265,81 +290,104 @@ def View(conn, All = True, desired = ["all", "author", "pub", "pubYr", "datasetN
     - prints number of records that have persistent identifiers
     - prints number of records that have descriptions
     - prints number of records that have citation info
-    - prints number of records that meet compliance standards. 
-    - returns a dictionary that contains all the SPASE_id's of these records, separated on their
-        types by keys of the same name
+    - prints number of records that meet compliance standards.
+    - returns a dictionary that contains all the SPASE_id's of these
+        records, separated on their types by keys of the same name
     - assign this dictionary to records
-    
+
     records = View(conn, desired = ['all']):
-    - prints the number of distinct SPASE records in the MetadataEntries table
-    - returns the SPASE_id's of these records in a dictionary labeled by key of the same name ("all")
-    - assigns the returned dictionary to records. 
-    
+    - prints the number of distinct SPASE records in the
+        MetadataEntries table
+    - returns the SPASE_id's of these records in a dictionary
+        labeled by key of the same name ("all")
+    - assigns the returned dictionary to records.
+
     records = View(conn, All = False, desired = ['pub', 'PID']):
-    - prints the number of records that have publishers and have NASA URLs
-    - prints the number of records that have persistent identifiers and NASA URLs.
-    - returns the SPASE_id's of these records in a dictionary labeled by keys of the same name ("pub" and "PID")
-    - assigns the returned dictionary to records. 
+    - prints the number of records that have publishers and
+        have NASA URLs
+    - prints the number of records that have persistent identifiers
+        and NASA URLs.
+    - returns the SPASE_id's of these records in a dictionary
+        labeled by keys of the same name ("pub" and "PID")
+    - assigns the returned dictionary to records.
     """
 
     from .RecordGrabber import Links
     # Add Code R here
-    desiredRecords = {"all": [], "author": [], "pub": [], "pubYr": [], "datasetName": [], "license": [], "url": [],
-                      "NASAurl": [], "PID": [], "description": [], "citation": [], "compliance": []}
+    desiredRecords = {"all": [], "author": [], "pub": [], "pubYr": [],
+                      "datasetName": [], "license": [], "url": [],
+                      "NASAurl": [], "PID": [], "description": [],
+                      "citation": [], "compliance": []}
     testObj = Links()
     # returns records with each metadata field with no restrictions
     if All:
         # Add Code P here
-        (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-         PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.allRecords(conn)
+        (records, authorRecords, pubRecords, pubYrRecords,
+         datasetNameRecords, licenseRecords, urlRecords,
+         NASAurlRecords, PIDRecords, descriptionRecords,
+         citationRecords, complianceRecords) = testObj.allRecords(conn)
     # returns records with each metadata field that have NASA URLs
     else:
-        (records, authorRecords, pubRecords, pubYrRecords, datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords, 
-         PIDRecords, descriptionRecords, citationRecords, complianceRecords) = testObj.NASA_URL_Records(conn)
-        
-    #testObj.SDAC_Records()
-    #testObj.SPDF_Records()
-    
+        (records, authorRecords, pubRecords, pubYrRecords,
+         datasetNameRecords, licenseRecords, urlRecords, NASAurlRecords,
+         PIDRecords, descriptionRecords, citationRecords,
+         complianceRecords) = testObj.NASA_URL_Records(conn)
+
+    # testObj.SDAC_Records()
+    # testObj.SPDF_Records()
+
     # print counts of SPASE records that answer analysis questions
     for record in desired:
         if record == "all":
             if All:
                 print("There are " + str(len(records)) + " records total.")
             else:
-                print("There are " + str(len(records)) + " records with NASA URLs.")
+                print("There are " + str(len(records)) + """ records with \
+                        NASA URLs.""")
             desiredRecords["all"] = records
         elif record == "author":
-            print("There are " + str(len(authorRecords)) + " records with an author.")
+            print("There are " + str(len(authorRecords)) + """ records with \
+                    an author.""")
             desiredRecords["author"] = authorRecords
         elif record == "pub":
-            print("There are " + str(len(pubRecords)) + " records with a publisher.")
+            print("There are " + str(len(pubRecords)) + """ records with \
+                    a publisher.""")
             desiredRecords["pub"] = pubRecords
         elif record == "pubYr":
-            print("There are " + str(len(pubYrRecords)) + " records with a publication year.")
+            print("There are " + str(len(pubYrRecords)) + """ records with \
+                    a publication year.""")
             desiredRecords["pubYr"] = pubYrRecords
         elif record == "datasetName":
-            print("There are " + str(len(datasetNameRecords)) + " records with a dataset.")
+            print("There are " + str(len(datasetNameRecords)) + """ records \
+                    with a dataset.""")
             desiredRecords["datasetName"] = datasetNameRecords
         elif record == "license":
-            print("There are " + str(len(licenseRecords)) + " records with a license.")
+            print("There are " + str(len(licenseRecords)) + """ records \
+                    with a license.""")
             desiredRecords["license"] = licenseRecords
         elif record == "url":
-            print("There are " + str(len(urlRecords)) + " records with a URL.")
+            print("There are " + str(len(urlRecords)) + """ records \
+                    with a URL.""")
             desiredRecords["url"] = urlRecords
         elif record == "NASAurl":
-            print("There are " + str(len(NASAurlRecords)) + " records with a NASA URL.")
+            print("There are " + str(len(NASAurlRecords)) + """ records \
+                    with a NASA URL.""")
             desiredRecords["NASAurl"] = NASAurlRecords
         elif record == "PID":
-            print("There are " + str(len(PIDRecords)) + " records with a persistent identifier.")
+            print("There are " + str(len(PIDRecords)) + """ records \
+                    with a persistent identifier.""")
             desiredRecords["PID"] = PIDRecords
         elif record == "description":
-            print("There are " + str(len(descriptionRecords)) + " records with a description.")
+            print("There are " + str(len(descriptionRecords)) + """ records \
+                    with a description.""")
             desiredRecords["description"] = descriptionRecords
         elif record == "citation":
-            print("There are " + str(len(citationRecords)) + " records with citation info.")
+            print("There are " + str(len(citationRecords)) + """ records \
+                    with citation info.""")
             desiredRecords["citation"] = citationRecords
         elif record == "compliance":
-            print("There are " + str(len(complianceRecords)) + " records that meet DCAT-US3 compliance.")
+            print("There are " + str(len(complianceRecords)) + """ records \
+                    that meet DCAT-US3 compliance.""")
             desiredRecords["compliance"] = complianceRecords
         # add Code S here
 
