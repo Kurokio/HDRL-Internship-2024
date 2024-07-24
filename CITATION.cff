@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Boquet
+    given-names: Zach
+    orcid: https://orcid.org/0009-0005-1686-262X
+    roles: code, example, tutorial
+  - family-names: Ringuette
+    given-names: Rebecca
+    orcid: https://orcid.org/0000-0003-0875-2023
+    roles: ideas, mentoring, project management, promotion
+title: "HDRL-Internship-2024"
+version: 0.1.0
+identifiers:
+  - type: doi
+    value: 
+date-released: 2024-08-05
+license: Apache-2.0
+repository-code: "https://github.com/Kurokio/HDRL-Internship-2024/tree/main"
