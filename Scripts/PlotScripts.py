@@ -66,11 +66,12 @@ def FAIR_Chart(conn, All=True):
     plt.annotate(f"Average FAIR Score: {AvgScore}", xy=(.05, .9),
                  xycoords='axes fraction')
     if All:
-        plt.title(f"""{createdDate}, Total Records: {total}\nRecords in the \
-                    NASA SPASE GitHub""", fontsize=14)
+        plt.title(f"{createdDate}, Total Records: {total}\n" +
+                  "Records in the NASA SPASE GitHub", fontsize=14)
     else:
-        plt.title(f"""{createdDate}, Total Records: {total}\nRecords in the \
-                    NASA SPASE GitHub with NASA URLs""", fontsize=14)
+        plt.title(f"{createdDate}, Total Records: {total}\n" +
+                  "Records in the NASA SPASE GitHub with NASA URLs",
+                  fontsize=14)
     fig.tight_layout()
 
 

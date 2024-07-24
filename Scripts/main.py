@@ -32,8 +32,7 @@ def Create(folder, conn, printFlag=False):
     import sqlite3
     from .SPASE_Scraper_Script import SPASE_Scraper
     from .PathGrabber import getPaths
-    from .SQLiteFun import (create_tables, add_Metadata, add_Sources,
-                            add_Records, execution, executionALL,
+    from .SQLiteFun import (create_tables, execution, executionALL,
                             add_TestResults, TestUpdate,
                             create_sqlite_database)
     from .DatalinkSep import AccessRightsSep
@@ -51,7 +50,7 @@ def Create(folder, conn, printFlag=False):
         print("The number of records is " + str(len(SPASE_paths)))
         print("The SPASE records found are:")
         print(SPASE_paths)
-        print("""======================================================\
+        print("""======================================================
               ================================================""")
 
     # list that holds SPASE records already checked
@@ -82,12 +81,12 @@ def Create(folder, conn, printFlag=False):
             authorRole = ", ".join(authorRole)
 
             if printFlag:
-                print("""The ResourceID is " + ResourceID + " which was\
+                print("""The ResourceID is " + ResourceID + " which was
                         obtained from """ + ResourceIDField)
                 print("The author(s) are " + author + " who are"
                       + authorRole + "which was obtained from " + authorField)
                 # add Code F here
-                print("The publication year is " + pubYear + """ which was \
+                print("The publication year is " + pubYear + """ which was
                         obtained from """ + pubDateField)
                 print("The publisher is " + pub + """ which was
                         obtained from """ + pubField)
@@ -97,7 +96,7 @@ def Create(folder, conn, printFlag=False):
                         obtained from """ + descField)
                 print("The persistent identifier is " + PID + """ which was
                         obtained from """ + PIDField)
-                print("""The URLs with their associated product keys \
+                print("""The URLs with their associated product keys
                         obtained from """ + datalinkField + """ and their
                         license(s) obtained from """ + licenseField + " are: ")
                 pprint.pprint(AccessRights)
@@ -221,7 +220,7 @@ def Create(folder, conn, printFlag=False):
                 Test = (record, 0, "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
                 Record_id = add_TestResults(conn, Test)
                 if printFlag:
-                    print(f"""Created a TestResults entry with \
+                    print(f"""Created a TestResults entry with
                             the row number {Record_id}""")
                 elif k == 0:
                     print("Creating TestResults entries")
@@ -342,52 +341,52 @@ def View(conn, All=True, desired=["all", "author", "pub",
             if All:
                 print("There are " + str(len(records)) + " records total.")
             else:
-                print("There are " + str(len(records)) + """ records with \
-                        NASA URLs.""")
+                print("There are " + str(len(records)) + "records with " +
+                      "NASA URLs.")
             desiredRecords["all"] = records
         elif record == "author":
-            print("There are " + str(len(authorRecords)) + """ records with \
-                    an author.""")
+            print("There are " + str(len(authorRecords)) + " records with " +
+                  "an author.")
             desiredRecords["author"] = authorRecords
         elif record == "pub":
-            print("There are " + str(len(pubRecords)) + """ records with \
-                    a publisher.""")
+            print("There are " + str(len(pubRecords)) + " records with " +
+                  "a publisher.")
             desiredRecords["pub"] = pubRecords
         elif record == "pubYr":
-            print("There are " + str(len(pubYrRecords)) + """ records with \
-                    a publication year.""")
+            print("There are " + str(len(pubYrRecords)) + " records with " +
+                  "a publication year.")
             desiredRecords["pubYr"] = pubYrRecords
         elif record == "datasetName":
-            print("There are " + str(len(datasetNameRecords)) + """ records \
-                    with a dataset.""")
+            print("There are " + str(len(datasetNameRecords)) + " records " +
+                  "with a dataset.")
             desiredRecords["datasetName"] = datasetNameRecords
         elif record == "license":
-            print("There are " + str(len(licenseRecords)) + """ records \
-                    with a license.""")
+            print("There are " + str(len(licenseRecords)) + " records " +
+                  "with a license.")
             desiredRecords["license"] = licenseRecords
         elif record == "url":
-            print("There are " + str(len(urlRecords)) + """ records \
-                    with a URL.""")
+            print("There are " + str(len(urlRecords)) + " records " +
+                  "with a URL.")
             desiredRecords["url"] = urlRecords
         elif record == "NASAurl":
-            print("There are " + str(len(NASAurlRecords)) + """ records \
-                    with a NASA URL.""")
+            print("There are " + str(len(NASAurlRecords)) + " records " +
+                  "with a NASA URL.")
             desiredRecords["NASAurl"] = NASAurlRecords
         elif record == "PID":
-            print("There are " + str(len(PIDRecords)) + """ records \
-                    with a persistent identifier.""")
+            print("There are " + str(len(PIDRecords)) + " records " +
+                  "with a persistent identifier.")
             desiredRecords["PID"] = PIDRecords
         elif record == "description":
-            print("There are " + str(len(descriptionRecords)) + """ records \
-                    with a description.""")
+            print("There are " + str(len(descriptionRecords)) + " records " +
+                  "with a description.")
             desiredRecords["description"] = descriptionRecords
         elif record == "citation":
-            print("There are " + str(len(citationRecords)) + """ records \
-                    with citation info.""")
+            print("There are " + str(len(citationRecords)) + " records " +
+                  "with citation info.")
             desiredRecords["citation"] = citationRecords
         elif record == "compliance":
-            print("There are " + str(len(complianceRecords)) + """ records \
-                    that meet DCAT-US3 compliance.""")
+            print("There are " + str(len(complianceRecords)) + " records " +
+                  "that meet DCAT-US3 compliance.")
             desiredRecords["compliance"] = complianceRecords
         # add Code S here
 

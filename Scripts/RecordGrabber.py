@@ -91,24 +91,27 @@ class Links():
                         ({has_citation}
                     AND
                         license LIKE "%cc0%"
-                        OR license LIKE "%Creative Commons Zero v1.0 Universal%")
+                        OR license LIKE
+                        "%Creative Commons Zero v1.0 Universal%")
                     OR
                         ({has_compliance}
                     AND
                         license LIKE "%cc0%"
-                        OR license LIKE "%Creative Commons Zero v1.0 Universal%")
+                        OR license LIKE
+                        "%Creative Commons Zero v1.0 Universal%")
                     OR
                         ({has_compliance}
-                    AND 
+                    AND
                         PID NOT LIKE "")
-                    OR  
+                    OR
                         (PID NOT LIKE ""
                     AND
                         license LIKE "%cc0%"
-                        OR license LIKE "%Creative Commons Zero v1.0 Universal%");"""
+                        OR license LIKE
+                        "%Creative Commons Zero v1.0 Universal%");"""
 
     # at least 3 fields
-    AL3_Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    AL3_Stmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries
                     WHERE ({has_citation}
                     AND
                         {has_compliance}
@@ -120,29 +123,33 @@ class Links():
                         PID NOT LIKE ""
                     AND
                         license LIKE "%cc0%"
-                        OR license LIKE "%Creative Commons Zero v1.0 Universal%")
+                        OR license LIKE
+                        "%Creative Commons Zero v1.0 Universal%")
                     OR
                         ({has_citation}
                     AND
                         {has_compliance}
                     AND
                         license LIKE "%cc0%"
-                        OR license LIKE "%Creative Commons Zero v1.0 Universal%")
+                        OR license LIKE
+                        "%Creative Commons Zero v1.0 Universal%")
                     OR
                         ({has_compliance}
                     AND
                         license LIKE "%cc0%"
-                        OR license LIKE "%Creative Commons Zero v1.0 Universal%"
-                    AND 
+                        OR license LIKE
+                        "%Creative Commons Zero v1.0 Universal%"
+                    AND
                         PID NOT LIKE "");"""
 
     # not actually all but all at this moment
-    allStmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries 
+    allStmt = f"""SELECT DISTINCT SPASE_id FROM MetadataEntries
                     WHERE {has_citation}
                     AND {has_compliance}
                     AND PID NOT LIKE ""
                     AND license LIKE "%cc0%"
-                    OR license LIKE "%Creative Commons Zero v1.0 Universal%";"""
+                    OR license LIKE
+                    "%Creative Commons Zero v1.0 Universal%";"""
 
     # all records with specified publisher
     SDAC_Stmt = """SELECT DISTINCT SPASE_id FROM MetadataEntries
@@ -152,7 +159,8 @@ class Links():
                         WHERE (publisher LIKE "%SPDF" OR publisher LIKE
                                 "%Space Physics Data Facility")"""
 
-    # intersect stmts match previous queries with results that only have SPDF or SDAC as publisher
+    # intersect stmts match previous queries with results that only
+    #    have SPDF or SDAC as publisher
     SDAC_Intersect = """SELECT DISTINCT SPASE_id FROM MetadataEntries
                         WHERE (publisher LIKE "%SDAC" OR publisher LIKE
                                 "%Solar Data Analysis Center")
@@ -193,12 +201,12 @@ class Links():
     SPDF_AL2 = SPDF_Intersect + AL2_Stmt
     SDAC_AL3 = SDAC_Intersect + AL3_Stmt
     SPDF_AL3 = SPDF_Intersect + AL3_Stmt
-    
-    # statements to retrieve records with each metadata field 
+
+    # statements to retrieve records with each metadata field
     #    that also have NASA URLs
     NASAurlIntersect = NASAurlStmt.replace(";", '')
     NASAurlIntersect += ' INTERSECT '
-    
+
     NASAauthorStmt = NASAurlIntersect + authorStmt
     NASApubStmt = NASAurlIntersect + pubStmt
     NASApubYrStmt = NASAurlIntersect + pubYrStmt
@@ -215,7 +223,8 @@ class Links():
 
         :param conn: A connection to the desired database
         :type conn: Connection object
-        :return: The list of all SPASE records that match their specific criteria.
+        :return: The list of all SPASE records that match their
+                    specific criteria.
         :rtype: tuple"""
 
         # prints links for all records
@@ -231,7 +240,7 @@ class Links():
         PIDs = execution(self.PID_Stmt, conn)
         descriptions = execution(self.descStmt, conn)
         citations = execution(self.citationStmt, conn)
-        #citeWOPIDs = execution(self.citationWoPID_Stmt)
+        # citeWOPIDs = execution(self.citationWoPID_Stmt)
         compliances = execution(self.complianceStmt, conn)
         '''AL1 = execution(self.AL1_Stmt)
         AL2 = execution(self.AL2_Stmt)
@@ -240,8 +249,7 @@ class Links():
         # Add Code M somewhere in this return
         return (links, authors, publishers, pubYrs, datasetNames,
                 licenses, urls, NASAurls, PIDs, descriptions,
-                citations, compliances) # citeWOPIDs, AL1, AL2, AL3, ALL)
-
+                citations, compliances)  # citeWOPIDs, AL1, AL2, AL3, ALL)
 
     def SDAC_Records(self):
         """Executes all SQLite SELECT statements with the
@@ -265,7 +273,6 @@ class Links():
         execution(self.SDAC_AL2, conn)
         execution(self.SDAC_AL3, conn)
 
-
     def SPDF_Records(self):
         """Executes all SQLite SELECT statements with the
         specified publisher, SPDF."""
@@ -287,7 +294,6 @@ class Links():
         execution(self.SPDF_AL1, conn)
         execution(self.SPDF_AL2, conn)
         execution(self.SPDF_AL3, conn)
-
 
     def NASA_URL_Records(self, conn):
         """Executes all SQLite SELECT statements that have
