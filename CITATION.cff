@@ -9,6 +9,10 @@ authors:
     given-names: Rebecca
     orcid: https://orcid.org/0000-0003-0875-2023
     roles: ideas, mentoring, project management, promotion
+  - family-names: Thomas
+    given-names: Brian A.
+    orcid: https://orcid.org/0000-0003-1623-9035
+    roles: financial
 title: "HDRL-Internship-2024"
 version: 0.1.0
 identifiers:
