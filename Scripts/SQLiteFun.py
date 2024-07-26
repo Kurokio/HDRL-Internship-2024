@@ -22,7 +22,7 @@ import sqlite3
 
 def create_sqlite_database(filename):
     """
-    Creates a database connection to a new SQLite database with
+    Creates a database connection to a new or existing SQLite database with
     the name provided. If the database already exists, it returns
     a connection object. This also tells you any errors that may occur.
 
@@ -30,6 +30,7 @@ def create_sqlite_database(filename):
     :type filename: String
     :return: Connection object
     """
+
     conn = None
     try:
         conn = sqlite3.connect(filename)
@@ -167,7 +168,7 @@ def execution(stmt, conn, number="single"):
     :param conn: A connection to the desired database
     :type conn: Connection object
     :param number: An string that formats the return based on how many
-                    items are being selected
+                    items are being selected.
     :type number: String
     :return: The list of the results from the SQLite statement
     :rtype: list
@@ -237,29 +238,34 @@ def TestUpdate(records, column, conn):
         # ==========================")
 
 
-def databaseInfo(conn):
+def databaseInfo(conn, print_flag=True):
     """
     Prints all table names and all the names of their associated columns
 
     :param conn: A connection to the desired database
     :type conn: Connection object
-    :return: None
+    :return: dictionary with table names as keys and column names as values
     """
-    # print all table names and the names of their columns
+    # print and store all table names and the names of their columns
+    name_dict = {}
     res = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
     for name in res.fetchall():
-        print("The table " + name[0] + " has columns:")
         conn.row_factory = sqlite3.Row
         cursor = conn.execute(f'select * from {name[0]}')
         row = cursor.fetchone()
         names = row.keys()
-        print(names)
-        print()
+        name_dict[name[0]] = names
+        if print_flag:
+            print("The table " + name[0] + " has columns:")
+            print(names)
+            print()
+
+    return name_dict
 
 
 # updates the TestResults column FAIRScore for all links to have
 #     their updated FAIR score
-def FAIRScorer(records, conn):
+def FAIRScorer(conn):
     """
     Iterates through the has_x column names of the TestResults table
     to calculate the FAIR Score of all the records in the parameter.
@@ -267,18 +273,22 @@ def FAIRScorer(records, conn):
     the notebook. Once the FAIR score is calculated, the FAIR_Score,
     MostRecent, and FAIR_ScoreDate columns are updated for that record.
 
-    :param records: A list of all the links in table.
-    :type records: list
     :param conn: A connection to the desired database
     :type conn: Connection object
     :return: None
     """
+    from Scripts import View
+
+    # retrieve record names using View
+    records = View(conn, desired=['all'], print_flag=False)
+    print(f"Analyzing {len(records['all'])} records found")
+
     # collect all column names
     cols = execution("SELECT name FROM PRAGMA_TABLE_INFO('TestResults')", conn)
     # get only the has_x columns
     FAIR_Date = cols[3]
     cols = cols[5:16]
-    for record in records:
+    for record in records['all']:
         score = 0
         # print(type(record))
         # print(record + " is the current record")
@@ -387,3 +397,6 @@ def FAIRScorer(records, conn):
                                 ({score},datetime('now'),'T')
                                 WHERE SPASE_id = '{record}' """
             executionALL(Stmt, conn)
+    print("FAIR scores calculated. Use the View function to see the results.")
+
+    return None
