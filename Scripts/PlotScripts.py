@@ -102,47 +102,40 @@ def MetadataBarChart(conn, records, percent=False, All=True):
     :param All: A boolean determining whether or not to use all records in
                 the database or only those with NASA URLs.
     :type All: Boolean
-    :return: None
+    :return: the figure object if successful execution, otherwise None.
     """
-
-    # list to hold counts of records passing each analysis test
-    counts = []
 
     # iterate thru dictionary values to get counts
     # adjust license title
-    types = ['Author', 'Publisher', 'Publication Year', 'Dataset Name',
-             'CC0 License', 'URL', 'NASA URL', 'Persistent Identifier',
-             'Description']
-    lists = records.values()
-    for kind in lists:
-        counts.append(len(kind))
-    # skip all type
-    counts = counts[1:]
+    types = ["Author", "Publisher", "Publication Year", "Dataset Name", 
+             "CC0 License", "URL", "NASA URL", "Persistent Identifier", 
+             "Description", "Citation", "DCAT3-US Compliance"]
 
-    # assemble into Numpy array
-    np_types = np.array(types)
-    print(np_types)
-    np_counts = np.array(counts[:9])
-    print(np_counts)
-
+    # assign based on matching key values instead
+    # had to change key values in the View function to make this work.
+    # Otherwise, this script breaks when the records variable
+    # doesn't have the expected content.
+    counts = [len(records[t]) if t in list(records.keys()) else 0 
+              for t in types]
+    np_counts = np.array(counts, dtype=float)
+    np_types = np.array(types, dtype=str)
+    
     # get total number of records
     # when all records in db
     if All:
         total = len(records["all"])
     # when just records with NASA URLs in db
     else:
-        total = len(records["NASAurl"])
+        if "NASA URL" not in list(records.keys()):
+            print("NASA URL not in given records. Please rerun the View " +
+                  "funtion to include this property and try again")
+            return None
+        total = len(records["NASA URL"])
 
     # calculate percentages
     if percent:
-        percentages = []
-        for count in counts:
-            per = (count/total)*100
-            if All:
-                percentages.append(round(per))
-            else:
-                percentages.append(round(per, 1))
-        np_percentages = np.array(percentages[:9])
+        np_percentages = np.round(np_counts/float(total)*100., decimals=1)
+        percentages = list(np_percentages)
 
     # create color distinctions between bars that are part of citation and none
     colors = ['tab:orange', 'tab:orange', 'tab:orange', 'tab:orange',
@@ -156,9 +149,9 @@ def MetadataBarChart(conn, records, percent=False, All=True):
 
     # create chart
     fig, ax = plt.subplots()
-    chart = ax.bar(np_types, np_counts, align='center', color=colors,
+    chart = ax.bar(np_types[:9], np_counts[:9], align='center', color=colors,
                    hatch=patterns)
-    plt.xticks(range(len(np_types)), np_types, rotation=45, ha='right')
+    plt.xticks(range(len(np_types[:9])), np_types[:9], rotation=45, ha='right')
     ax.set_xlabel("Metadata Fields")
     ax.set_ylabel("Number of Records")
     start, end = ax.get_ylim()
@@ -191,3 +184,5 @@ def MetadataBarChart(conn, records, percent=False, All=True):
         plt.title("Records in the NASA SPASE GitHub")
     else:
         plt.title("Records in the NASA SPASE GitHub with NASA URLs")
+
+    return fig

@@ -33,7 +33,7 @@ def SPASE_Scraper(path):
     """
 
     # establish path of XML file
-    print("Scraping " + path)
+    # print("Scraping " + path)
     if os.path.isfile(path) and path.endswith(".xml"):
         file_size_bytes = os.path.getsize(path)
         file_size = file_size_bytes/(1024*1024*1024)

@@ -45,9 +45,13 @@ def Create(folder, conn, printFlag=False):
     # print("Enter root folder you want to search")
     # folder = input()
     print("You entered " + folder)
+    print("Discovering SPASE records....")
     SPASE_paths = getPaths(folder, SPASE_paths)
+    print("The number of records is " + str(len(SPASE_paths)))
+    if len(SPASE_paths) == 0:
+        print("No records found. Returning.")
+        return None
     if printFlag:
-        print("The number of records is " + str(len(SPASE_paths)))
         print("The SPASE records found are:")
         print(SPASE_paths)
         print("""======================================================
@@ -57,17 +61,18 @@ def Create(folder, conn, printFlag=False):
     searched = []
 
     # iterate through all SPASE records returned by PathGrabber
-    for record in SPASE_paths:
+    print("Extracting metadata ...", end="")
+    # This page was useful to get the prints to work nicely.
+    # https://stackoverflow.com/questions/45263205/python-how-to-print-on-same-line-clearing-previous-text
+    for r, record in enumerate(SPASE_paths):
         # scrape metadata for each record
         if record not in searched:
+            print(f"\r\033[KExtracting metadata from record {r+1} of {len(SPASE_paths)}", end="")
             (ResourceID, ResourceIDField, author, authorField, authorRole,
              pub, pubField, pubDate, pubDateField, datasetName,
              datasetNameField, desc, descField, PID, PIDField,
              AccessRights, licenseField, datalinkField,
              version, ReleaseDate) = SPASE_Scraper(record)
-
-            # list that holds required fields
-            # required = [ResourceID, description, author, authorRole, url]
 
             # add record to searched
             searched.append(record)
@@ -189,9 +194,9 @@ def Create(folder, conn, printFlag=False):
             if printFlag:
                 print("""=================================================\
                       =====================================================""")
-
         else:
             continue
+    print("\r\033[KMetadata extraction complete.                        ")
 
     # collects SPASE_id's of records that answer analysis questions
     testObj = Links()
@@ -223,7 +228,7 @@ def Create(folder, conn, printFlag=False):
                     print(f"""Created a TestResults entry with
                             the row number {Record_id}""")
                 elif k == 0:
-                    print("Creating TestResults entries")
+                    print("Creating TestResults entries...", end="")
             k += 1
 
     except sqlite3.Error as e:
@@ -233,6 +238,7 @@ def Create(folder, conn, printFlag=False):
     #   record if in the list (if record in author, has_author = 1)
     # UPDATE stmt for each test
     # Add Code O here
+    # This might be faster if you use testObj.allRecords(conn)[i]
     TestUpdate(authorRecords, "has_author", conn)
     TestUpdate(pubRecords, "has_pub", conn)
     TestUpdate(pubYrRecords, "has_pubYr", conn)
@@ -244,14 +250,17 @@ def Create(folder, conn, printFlag=False):
     TestUpdate(descriptionRecords, "has_desc", conn)
     TestUpdate(citationRecords, "has_citation", conn)
     TestUpdate(complianceRecords, "has_compliance", conn)
+    print("\r\033[KMetadata successfully stored in the SQL tables.")
 
     # Add Code Q below
+    return None
 
 
-def View(conn, All=True, desired=["all", "author", "pub",
-                                  "pubYr", "datasetName", "license",
-                                  "url", "NASAurl", "PID",
-                                  "description", "citation", "compliance"]):
+def View(conn, All=True, desired=["all", "Author", "Publisher", 
+                                  "Publication Year", "Dataset Name", 
+                                  "CC0 License", "URL", "NASA URL", 
+                                  "Persistent Identifier", "Description",
+                                  "Citation", "DCAT3-US Compliance"]):
     """
     Prints the number of records that meet each test criteria
     provided as well as return those SPASE_id's to the caller
@@ -268,7 +277,8 @@ def View(conn, All=True, desired=["all", "author", "pub",
     :param desired: A list of Strings which determine the kind of records
                     whose counts are printed and whose SPASE_id's are
                     assigned to the dictionary returned. The default value
-                    is all kinds.
+                    is all kinds. This list matches the categories in the
+                    MetadataBarChart function in PlotScripts.py.
     :param type: list
     :return: A dictionary containing lists of all records that fulfill
                 certain test criteria as values.
@@ -313,10 +323,10 @@ def View(conn, All=True, desired=["all", "author", "pub",
 
     from .RecordGrabber import Links
     # Add Code R here
-    desiredRecords = {"all": [], "author": [], "pub": [], "pubYr": [],
-                      "datasetName": [], "license": [], "url": [],
-                      "NASAurl": [], "PID": [], "description": [],
-                      "citation": [], "compliance": []}
+    desiredRecords = {"all": [], "Author": [], "Publisher": [], "Publication Year": [],
+                      "Dataset Name": [], "CC0 License": [], "URL": [],
+                      "NASA URL": [], "Persistent Identifier": [], "Description": [],
+                      "Citation": [], "DCAT3-US Compliance": []}
     testObj = Links()
     # returns records with each metadata field with no restrictions
     if All:
@@ -337,57 +347,63 @@ def View(conn, All=True, desired=["all", "author", "pub",
 
     # print counts of SPASE records that answer analysis questions
     for record in desired:
-        if record == "all":
-            if All:
-                print("There are " + str(len(records)) + " records total.")
-            else:
-                print("There are " + str(len(records)) + "records with " +
-                      "NASA URLs.")
+        # need "all" for the plots to work
+        if len(desiredRecords["all"]) == 0:
             desiredRecords["all"] = records
-        elif record == "author":
+        if All:
+            print("There are " + str(len(records)) + " records total.")
+        else:
+            print("There are " + str(len(records)) + "records with " +
+                  " NASA URLs.")
+
+        # cycle through other fields
+        if record == "Author":
             print("There are " + str(len(authorRecords)) + " records with " +
                   "an author.")
-            desiredRecords["author"] = authorRecords
-        elif record == "pub":
+            desiredRecords["Author"] = authorRecords
+        elif record == "Publisher":
             print("There are " + str(len(pubRecords)) + " records with " +
                   "a publisher.")
-            desiredRecords["pub"] = pubRecords
-        elif record == "pubYr":
+            desiredRecords["Publisher"] = pubRecords
+        elif record == "Publication Year":
             print("There are " + str(len(pubYrRecords)) + " records with " +
                   "a publication year.")
-            desiredRecords["pubYr"] = pubYrRecords
-        elif record == "datasetName":
+            desiredRecords["Publication Year"] = pubYrRecords
+        elif record == "Dataset Name":
             print("There are " + str(len(datasetNameRecords)) + " records " +
                   "with a dataset.")
-            desiredRecords["datasetName"] = datasetNameRecords
-        elif record == "license":
+            desiredRecords["Dataset Name"] = datasetNameRecords
+        elif record == "CC0 License":
             print("There are " + str(len(licenseRecords)) + " records " +
-                  "with a license.")
-            desiredRecords["license"] = licenseRecords
-        elif record == "url":
+                  "with a CC0 license.")
+            desiredRecords["CC0 License"] = licenseRecords
+        elif record == "URL":
             print("There are " + str(len(urlRecords)) + " records " +
                   "with a URL.")
-            desiredRecords["url"] = urlRecords
-        elif record == "NASAurl":
+            desiredRecords["URL"] = urlRecords
+        elif record == "NASA URL":
             print("There are " + str(len(NASAurlRecords)) + " records " +
                   "with a NASA URL.")
-            desiredRecords["NASAurl"] = NASAurlRecords
-        elif record == "PID":
+            desiredRecords["NASA URL"] = NASAurlRecords
+        elif record == "Persistent Identifier":
             print("There are " + str(len(PIDRecords)) + " records " +
                   "with a persistent identifier.")
-            desiredRecords["PID"] = PIDRecords
-        elif record == "description":
+            desiredRecords["Persistent Identifier"] = PIDRecords
+        elif record == "Description":
             print("There are " + str(len(descriptionRecords)) + " records " +
                   "with a description.")
-            desiredRecords["description"] = descriptionRecords
-        elif record == "citation":
+            desiredRecords["Description"] = descriptionRecords
+        elif record == "Citation":
             print("There are " + str(len(citationRecords)) + " records " +
                   "with citation info.")
-            desiredRecords["citation"] = citationRecords
-        elif record == "compliance":
+            desiredRecords["Citation"] = citationRecords
+        elif record == "DCAT3-US Compliance":
             print("There are " + str(len(complianceRecords)) + " records " +
-                  "that meet DCAT-US3 compliance.")
-            desiredRecords["compliance"] = complianceRecords
+                  "that meet DCAT3-US compliance.")
+            desiredRecords["DCAT3-US Compliance"] = complianceRecords
+        else:
+            print(f'Requested field {record} not found. Please choose from ' +
+                  f"{list(desiredRecords.keys())}")
         # add Code S here
 
     # return SPASE_id's of records that pass the test specified by caller
