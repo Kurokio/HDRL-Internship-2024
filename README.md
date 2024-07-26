@@ -10,16 +10,12 @@ This project consists of a host of scripts and Jupyter notebooks which perform t
 
 *Note that this project was tested in Summer 2024 on SPASE version 2.6.1*
 
-## Prerequisites
-1. Clone the NASA SPASE repository found at https://github.com/hpde/NASA/tree/master by running the following.
-```python
-git clone -b master --single-branch --depth=1 https://github.com/hpde/NASA
-```
-2. Clone this repo.
+## Installation Instructions
+1. Clone this repo.
 ```python
 git clone https://github.com/Kurokio/HDRL-Internship-2024
 ```
-3. In the directory directly above the HDRL-Internship-2024 directory, install the Scripts module.
+2. In the directory directly above the HDRL-Internship-2024 directory, install the Scripts module.
 ```python
 pip install -e ./HDRL-Internship-2024
 ```
