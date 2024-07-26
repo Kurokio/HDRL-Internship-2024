@@ -17,6 +17,10 @@ git clone https://github.com/Kurokio/HDRL-Internship-2024
 ```
 2. In the directory directly above the HDRL-Internship-2024 directory, install the Scripts module.
 ```python
+pip install ./HDRL-Internship-2024
+```
+If you intend to modify the scripts, use
+```python
 pip install -e ./HDRL-Internship-2024
 ```
 
