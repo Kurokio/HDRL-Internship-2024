@@ -210,29 +210,30 @@ def Create(folder, conn, printFlag=False):
     TestResultRecords = execution("""SELECT DISTINCT(SPASE_id)
                             FROM TestResults""", conn)
 
-    # create the table with 0 as default for all,
+    # create the table with 0 as default for all, only for new records
     #    passing all records to the first insert call
+    new_records = [record for record in records if record not in TestResultRecords]
     try:
         # with sqlite3.connect('SPASE_Data.db') as conn:
         k = 0
-        for record in records:
-            # if it is not a new SPASE Record
-            if record in TestResultRecords:
-                continue
-            # if it is a new SPASE record
+        for record in new_records:
+            # Add Code J to this assignment statement
+            Test = (record, 0, "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
+            Record_id = add_TestResults(conn, Test)
+            if printFlag:
+                print(f"""Created a TestResults entry with
+                        the row number {Record_id}""")
+            if k == 0:
+                print("Creating TestResults entries...", end="")
             else:
-                # Add Code J to this assignment statement
-                Test = (record, 0, "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "")
-                Record_id = add_TestResults(conn, Test)
-                if printFlag:
-                    print(f"""Created a TestResults entry with
-                            the row number {Record_id}""")
-                elif k == 0:
-                    print("Creating TestResults entries...", end="")
+                print(f"\r\033[KCreating TestResult entried for record {k+1} " +
+                      f"of {len(SPASE_paths)}", end="")
             k += 1
 
     except sqlite3.Error as e:
         print(e)
+
+    print(f"\r\033[KTestResult entries completed")
 
     # iterate thru lists one by one and update column for each
     #   record if in the list (if record in author, has_author = 1)
