@@ -3,6 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from datetime import date
 from .SQLiteFun import execution
+from Scripts import View
 
 
 def FAIR_Chart(conn, All=True):
@@ -19,7 +20,7 @@ def FAIR_Chart(conn, All=True):
     :param All: A boolean determining whether or not to use all records
                     in the database or only those with NASA URLs.
     :type All: Boolean
-    :return: None
+    :return: the figure
     """
 
     # array that holds all FAIR Scores
@@ -74,8 +75,10 @@ def FAIR_Chart(conn, All=True):
                   fontsize=14)
     fig.tight_layout()
 
+    return fig
 
-def MetadataBarChart(conn, records, percent=False, All=True):
+
+def MetadataBarChart(conn, percent=False, All=True):
     """
     Takes a connection object as parameter as well as a dictionary
     containing the SPASE records with each kind of metadata. It
@@ -92,10 +95,6 @@ def MetadataBarChart(conn, records, percent=False, All=True):
 
     :param conn: A connection to the desired database
     :type conn: Connection object
-    :param records: A dictionary with the keys being the metadata fields
-                    and the values being the records that have an entry
-                    for that field.
-    :type records: dictionary
     :param percent: A boolean determining if the data labels in the chart
                     will be displayed as percentages or integers.
     :type percent: Boolean
@@ -110,6 +109,10 @@ def MetadataBarChart(conn, records, percent=False, All=True):
     types = ["Author", "Publisher", "Publication Year", "Dataset Name", 
              "CC0 License", "URL", "NASA URL", "Persistent Identifier", 
              "Description", "Citation", "DCAT3-US Compliance"]
+
+    # return values for all fields
+    # including this here instead of as input to avoid incomplete plots.
+    records = View(conn, All=All, print_flag=False)
 
     # assign based on matching key values instead
     # had to change key values in the View function to make this work.
@@ -126,10 +129,6 @@ def MetadataBarChart(conn, records, percent=False, All=True):
         total = len(records["all"])
     # when just records with NASA URLs in db
     else:
-        if "NASA URL" not in list(records.keys()):
-            print("NASA URL not in given records. Please rerun the View " +
-                  "funtion to include this property and try again")
-            return None
         total = len(records["NASA URL"])
 
     # calculate percentages
