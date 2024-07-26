@@ -25,7 +25,7 @@ def MetadataPrinter(record, fields=["ResourceID", "author", "pub",
 
     # make recordPath from SPASE_id provided
     before, sep, after = record.partition('/')
-    recordPath = '/home/jovyan' + after + '.xml'
+    recordPath = '../../' + after + '.xml'
 
     # retrieve metadata
     (ResourceID, ResourceIDField, author, authorField, authorRole,
