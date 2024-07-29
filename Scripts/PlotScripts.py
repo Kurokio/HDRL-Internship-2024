@@ -106,8 +106,8 @@ def MetadataBarChart(conn, percent=False, All=True):
 
     # iterate thru dictionary values to get counts
     # adjust license title
-    types = ["Author", "Publisher", "Publication Year", "Dataset Name", 
-             "CC0 License", "URL", "NASA URL", "Persistent Identifier", 
+    types = ["Author", "Publisher", "Publication Year", "Dataset Name",
+             "CC0 License", "URL", "NASA URL", "Persistent Identifier",
              "Description", "Citation", "DCAT3-US Compliance"]
 
     # return values for all fields
@@ -118,11 +118,11 @@ def MetadataBarChart(conn, percent=False, All=True):
     # had to change key values in the View function to make this work.
     # Otherwise, this script breaks when the records variable
     # doesn't have the expected content.
-    counts = [len(records[t]) if t in list(records.keys()) else 0 
+    counts = [len(records[t]) if t in list(records.keys()) else 0
               for t in types]
     np_counts = np.array(counts, dtype=float)
     np_types = np.array(types, dtype=str)
-    
+
     # get total number of records
     # when all records in db
     if All:

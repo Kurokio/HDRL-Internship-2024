@@ -67,7 +67,8 @@ def Create(folder, conn, printFlag=False):
     for r, record in enumerate(SPASE_paths):
         # scrape metadata for each record
         if record not in searched:
-            print(f"\r\033[KExtracting metadata from record {r+1} of {len(SPASE_paths)}", end="")
+            print(f"\r\033[KExtracting metadata from record {r+1}" + "\"
+                  f"of {len(SPASE_paths)}", end="")
             (ResourceID, ResourceIDField, author, authorField, authorRole,
              pub, pubField, pubDate, pubDateField, datasetName,
              datasetNameField, desc, descField, PID, PIDField,
@@ -145,8 +146,8 @@ def Create(folder, conn, printFlag=False):
                     i += 1
                 # add or update Records entry
                 before, sep, after = ResourceID.partition('NASA')
-                compURL = """https://github.com/hpde/NASA/blob/master
-                            """ + after + ".xml"
+                compURL = "https://github.com/hpde/NASA/blob/master"
+                compURL = compURL + after + ".xml"
                 UpdateStmt = f''' INSERT INTO Records
                                         (SPASE_id, SPASE_Version,
                                             LastModified,SPASE_URL)
@@ -212,9 +213,9 @@ def Create(folder, conn, printFlag=False):
 
     # create the table with 0 as default for all, only for new records
     #    passing all records to the first insert call
-    new_records = [record for record in records if record not in TestResultRecords]
+    new_records = [record for record in records if record
+                   not in TestResultRecords]
     try:
-        # with sqlite3.connect('SPASE_Data.db') as conn:
         k = 0
         for record in new_records:
             # Add Code J to this assignment statement
@@ -226,8 +227,8 @@ def Create(folder, conn, printFlag=False):
             if k == 0:
                 print("Creating TestResults entries...", end="")
             else:
-                print(f"\r\033[KCreating TestResult entried for record {k+1} " +
-                      f"of {len(SPASE_paths)}", end="")
+                print(f"\r\033[KCreating TestResult entries for record {k+1}" + "\"
+                      f" of {len(SPASE_paths)}", end="")
             k += 1
 
     except sqlite3.Error as e:
@@ -257,12 +258,12 @@ def Create(folder, conn, printFlag=False):
     return None
 
 
-def View(conn, All=True, desired=["all", "Author", "Publisher", 
-                                  "Publication Year", "Dataset Name", 
-                                  "CC0 License", "URL", "NASA URL", 
+def View(conn, All=True, desired=["all", "Author", "Publisher",
+                                  "Publication Year", "Dataset Name",
+                                  "CC0 License", "URL", "NASA URL",
                                   "Persistent Identifier", "Description",
                                   "Citation", "DCAT3-US Compliance"],
-        print_flag=True):
+         print_flag=True):
     """
     Prints the number of records that meet each test criteria
     provided as well as return those SPASE_id's to the caller
@@ -325,10 +326,12 @@ def View(conn, All=True, desired=["all", "Author", "Publisher",
 
     from .RecordGrabber import Links
     # Add Code R here
-    #desiredRecords = {"all": [], "Author": [], "Publisher": [], "Publication Year": [],
-    #                  "Dataset Name": [], "CC0 License": [], "URL": [],
-    #                  "NASA URL": [], "Persistent Identifier": [], "Description": [],
-    #                  "Citation": [], "DCAT3-US Compliance": []}
+    # desiredRecords = {"all": [], "Author": [], "Publisher": [],
+    # "Publication Year": [],"Dataset Name": [],
+    # "CC0 License": [], "URL": [],
+    # "NASA URL": [], "Persistent Identifier": [],
+    # "Description": [], "Citation": [],
+    # "DCAT3-US Compliance": []}
     # need "all" for the plots to work
     if 'all' not in desired:
         desired.append('all')
@@ -362,65 +365,65 @@ def View(conn, All=True, desired=["all", "Author", "Publisher",
                       " NASA URLs.")
         elif record == "Author":
             if print_flag:
-                print("There are " + str(len(authorRecords)) + " records with " +
-                  "an author.")
+                print("There are " + str(len(authorRecords)) +
+                      " records with an author.")
             desiredRecords["Author"] = authorRecords
         elif record == "Publisher":
             if print_flag:
                 print("There are " + str(len(pubRecords)) + " records with " +
-                  "a publisher.")
+                      "a publisher.")
             desiredRecords["Publisher"] = pubRecords
         elif record == "Publication Year":
             if print_flag:
-                print("There are " + str(len(pubYrRecords)) + " records with " +
-                  "a publication year.")
+                print("There are " + str(len(pubYrRecords)) + " records with" +
+                      " a publication year.")
             desiredRecords["Publication Year"] = pubYrRecords
         elif record == "Dataset Name":
             if print_flag:
-                print("There are " + str(len(datasetNameRecords)) + " records " +
-                  "with a dataset.")
+                print("There are " + str(len(datasetNameRecords)) +
+                      " records with a dataset.")
             desiredRecords["Dataset Name"] = datasetNameRecords
         elif record == "CC0 License":
             if print_flag:
                 print("There are " + str(len(licenseRecords)) + " records " +
-                  "with a CC0 license.")
+                      "with a CC0 license.")
             desiredRecords["CC0 License"] = licenseRecords
         elif record == "URL":
             if print_flag:
                 print("There are " + str(len(urlRecords)) + " records " +
-                  "with a URL.")
+                      "with a URL.")
             desiredRecords["URL"] = urlRecords
         elif record == "NASA URL":
             if print_flag:
                 print("There are " + str(len(NASAurlRecords)) + " records " +
-                  "with a NASA URL.")
+                      "with a NASA URL.")
             desiredRecords["NASA URL"] = NASAurlRecords
         elif record == "Persistent Identifier":
             if print_flag:
                 print("There are " + str(len(PIDRecords)) + " records " +
-                  "with a persistent identifier.")
+                      "with a persistent identifier.")
             desiredRecords["Persistent Identifier"] = PIDRecords
         elif record == "Description":
             if print_flag:
-                print("There are " + str(len(descriptionRecords)) + " records " +
-                  "with a description.")
+                print("There are " + str(len(descriptionRecords)) +
+                      " records with a description.")
             desiredRecords["Description"] = descriptionRecords
         elif record == "Citation":
             if print_flag:
                 print("There are " + str(len(citationRecords)) + " records " +
-                  "with citation info.")
+                      "with citation info.")
             desiredRecords["Citation"] = citationRecords
         elif record == "DCAT3-US Compliance":
             if print_flag:
-                print("There are " + str(len(complianceRecords)) + " records " +
-                  "that meet DCAT3-US compliance.")
+                print("There are " + str(len(complianceRecords)) +
+                      " records that meet DCAT3-US compliance.")
             desiredRecords["DCAT3-US Compliance"] = complianceRecords
         elif record == "all":
             continue
         else:
             if print_flag:
-                print(f'Requested field {record} not found. Please choose from ' +
-                  f"{list(desiredRecords.keys())}")
+                print(f'Requested field {record} not found. Please ' +
+                      f"choose from {list(desiredRecords.keys())}")
         # add Code S here
 
     # return SPASE_id's of records that pass the test specified by caller
