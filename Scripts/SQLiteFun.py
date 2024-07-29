@@ -139,6 +139,10 @@ def add_TestResults(conn, entry):
     :rtype: int
     """
 
+    # https://stackoverflow.com/questions/1609637/how-to-insert-multiple-rows-in-sqlite
+    # https://www.sqlitetutorial.net/sqlite-generated-columns/
+    # create an alternate function that fills in by columns instead of rows when 
+    #    number of rows is bigger than number of columns
     sql = '''INSERT INTO TestResults(SPASE_id,FAIR_Score,FAIR_ScoreDate,
                 MostRecent,has_author,has_pub,has_pubYr,has_datasetName,
                 has_license,has_url,has_NASAurl,has_PID,has_desc,
