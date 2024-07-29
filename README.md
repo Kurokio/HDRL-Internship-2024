@@ -19,7 +19,7 @@ git clone https://github.com/Kurokio/HDRL-Internship-2024
 ```python
 pip install ./HDRL-Internship-2024
 ```
-If you intend to modify the scripts, use
+If you intend to modify the scripts, execute this instead.
 ```python
 pip install -e ./HDRL-Internship-2024
 ```
