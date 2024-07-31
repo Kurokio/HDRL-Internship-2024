@@ -67,8 +67,9 @@ def Create(folder, conn, printFlag=False):
     for r, record in enumerate(SPASE_paths):
         # scrape metadata for each record
         if record not in searched:
-            print(f"\r\033[KExtracting metadata from record {r+1}" + "\"
-                  f"of {len(SPASE_paths)}", end="")
+            statusMessage = f"\r\033[KExtracting metadata from record {r+1}"
+            statusMessage += f" of {len(SPASE_paths)}"
+            print(statusMessage, end="")
             (ResourceID, ResourceIDField, author, authorField, authorRole,
              pub, pubField, pubDate, pubDateField, datasetName,
              datasetNameField, desc, descField, PID, PIDField,
@@ -227,8 +228,9 @@ def Create(folder, conn, printFlag=False):
             if k == 0:
                 print("Creating TestResults entries...", end="")
             else:
-                print(f"\r\033[KCreating TestResult entries for record {k+1}" + "\"
-                      f" of {len(SPASE_paths)}", end="")
+                statusMessage = "\r\033[KCreating TestResult entries for "
+                statusMessage += f"record {k+1} of {len(SPASE_paths)}"
+                print(statusMessage, end="")
             k += 1
 
     except sqlite3.Error as e:
