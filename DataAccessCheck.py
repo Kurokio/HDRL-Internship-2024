@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from .SQLiteFun import execution, executionALL
+from Scripts.SQLiteFun import execution, executionALL
 from hapiclient.util import HAPIError
 from hapiclient import hapi
 from time import sleep
