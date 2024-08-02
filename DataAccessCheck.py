@@ -21,14 +21,13 @@ def HAPIChecker(server, dataset, start, stop, parameters, return_dict):
 
     # if no error arises
     else:
-        # search for data
-        while not dataFound:
-            if len(data) == 0:
-                pass
-            else:
-                if str(data[0][0]) != "":
-                    dataFound = True
-                    #print("Example data looks like " + str(data[0][0]))
+        # if no data, try at next interval
+        if len(data) == 0:
+            pass
+        else:
+            if str(data[0][0]) != "":
+                dataFound = True
+                #print("Example data looks like " + str(data[0][0]))
     finally:
         return_dict["dataFound"] = dataFound
         return_dict["attempts"] += 1
@@ -176,7 +175,7 @@ def DataChecker(prodKeys, conn):
                         print("Data was successfully accessed")
             # if all intervals fail or link is broken -> no data
             if (not return_dict["dataFound"]) and (not tooLong):
-            # inputs error message into TestResults table
+                # inputs error message into TestResults table
                 print("No data was found")
                 errMessage = "HAPI info check passed after 1 attempt. HAPI data check"
                 errMessage += f" failed after {return_dict['attempts']} attempt(s)."
