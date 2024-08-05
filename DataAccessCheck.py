@@ -1,3 +1,5 @@
+# STILL TESTING
+
 from datetime import datetime, timedelta
 from Scripts.SQLiteFun import execution, executionALL
 from hapiclient.util import HAPIError
@@ -84,11 +86,11 @@ def DataChecker(prodKeys, conn):
                                     SET Errors = '{errMessage}'
                                     FROM (SELECT SPASE_id, prodKey FROM TestResults
                                             INNER JOIN MetadataEntries USING (SPASE_id))
-                                    WHERE prodKey = '{dataset}' """
+                                    WHERE prodKey LIKE '{dataset}%' """
             Record_id = execution(f""" SELECT rowNum 
                                     FROM (SELECT TestResults.rowNum, SPASE_id, prodKey FROM TestResults 
                                         INNER JOIN MetadataEntries USING (SPASE_id))
-                                    WHERE prodKey = '{dataset}';""", conn)
+                                    WHERE prodKey LIKE '{dataset}%';""", conn)
             executionALL(HAPIErrorStmt, conn)
             print(f"Sent error message to a TestResults entry with the row number {Record_id}")
             continue
@@ -179,15 +181,20 @@ def DataChecker(prodKeys, conn):
                 print("No data was found")
                 errMessage = "HAPI info check passed after 1 attempt. HAPI data check"
                 errMessage += f" failed after {return_dict['attempts']} attempt(s)."
+                # get SPASE_id that matches the dataset
+                prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
+                                    WHERE prodKey LIKE '{dataset}%' """
+                SPASE_ID = execution(prodKeyStmt, conn)
+                SPASE_ID = SPASE_ID[0]
+                # update Errors value for that record in TestResults
                 HAPIErrorStmt = f""" UPDATE TestResults
                                         SET Errors = '{errMessage}'
-                                        FROM (SELECT SPASE_id, prodKey FROM TestResults
-                                                INNER JOIN MetadataEntries USING (SPASE_id))
-                                        WHERE prodKey = '{dataset}' """
+                                        WHERE SPASE_id = '{SPASE_ID}' """
+                executionALL(HAPIErrorStmt, conn)
+                # get row number of record updated for visual confirmation later
                 Record_id = execution(f""" SELECT rowNum 
                                         FROM (SELECT TestResults.rowNum, SPASE_id, prodKey FROM TestResults 
                                             INNER JOIN MetadataEntries USING (SPASE_id))
-                                        WHERE prodKey = '{dataset}';""", conn)
-                executionALL(HAPIErrorStmt, conn)
+                                        WHERE prodKey LIKE '{dataset}%';""", conn)
                 print(f"Sent error message to a TestResults entry with the row number {Record_id}")
     return lines
