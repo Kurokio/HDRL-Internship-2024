@@ -99,7 +99,8 @@ def create_tables(conn):
                 has_desc INTEGER,
                 has_citation INTEGER,
                 has_compliance INTEGER,
-                Errors TEXT
+                Errors TEXT,
+                dataAccess TEXT
         );"""
         """CREATE TABLE IF NOT EXISTS Records (
                 rowNum INTEGER PRIMARY KEY,
