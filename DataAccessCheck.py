@@ -40,12 +40,14 @@ def HAPIChecker(server, dataset, start, stop, parameters, return_dict):
 def DataChecker(prodKeys, conn):
     print("The datasets are " + str(prodKeys))
     lines = []
+    multiKeys = False
 
     # iterate thru prodKeys to assign as dataset
     for prodKey in prodKeys:
         # check if multiple prodKeys for same URL (mult keys in one string)
         if ", " in prodKey:
             print("This HAPI URL has multiple product keys.")
+            multiKeys = True
             index = prodKeys.index(prodKey)
             prodKey = prodKey.replace("\'", "")
             # keep separating them until each prodKey is in own string
@@ -71,9 +73,30 @@ def DataChecker(prodKeys, conn):
         paramNames =  []
         # initialize HAPI server
         server = 'https://cdaweb.gsfc.nasa.gov/hapi'
+        
+        # get SPASE_id that matches the dataset
+        if multiKeys:
+            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
+                                WHERE prodKey LIKE '{dataset},%' """
+        else:
+            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
+                                WHERE prodKey = '{dataset}' """
+        SPASE_ID = execution(prodKeyStmt, conn)
+        SPASE_ID = SPASE_ID[0]
+        # get row number of record updated for visual confirmation later
+        if multiKeys:
+            Record_id = execution(f""" SELECT rowNum 
+                                    FROM (SELECT TestResults.rowNum, SPASE_id, prodKey, url FROM TestResults 
+                                        INNER JOIN MetadataEntries USING (SPASE_id))
+                                    WHERE prodKey LIKE '{dataset},%' AND url LIKE '%/hapi';""", conn)
+        else:
+            Record_id = execution(f""" SELECT rowNum 
+                                FROM (SELECT TestResults.rowNum, SPASE_id, prodKey, url FROM TestResults 
+                                    INNER JOIN MetadataEntries USING (SPASE_id))
+                                WHERE prodKey = '{dataset}' AND url LIKE '%/hapi';""", conn)
 
         # retrieve all parameters and the start date from the server
-        sleep(5.0)
+        #sleep(5.0)
         try:
             meta = hapi(server,dataset)
         # catches errors like 'unknown dataset id'
@@ -82,15 +105,10 @@ def DataChecker(prodKeys, conn):
             print(" ", e)
             # record error message saying the dataset failed at info check stage
             errMessage = "HAPI info check failed"
+            # update Errors value for that record in TestResults
             HAPIErrorStmt = f""" UPDATE TestResults
                                     SET Errors = '{errMessage}'
-                                    FROM (SELECT SPASE_id, prodKey FROM TestResults
-                                            INNER JOIN MetadataEntries USING (SPASE_id))
-                                    WHERE prodKey LIKE '{dataset}%' """
-            Record_id = execution(f""" SELECT rowNum 
-                                    FROM (SELECT TestResults.rowNum, SPASE_id, prodKey FROM TestResults 
-                                        INNER JOIN MetadataEntries USING (SPASE_id))
-                                    WHERE prodKey LIKE '{dataset}%';""", conn)
+                                    WHERE SPASE_id = '{SPASE_ID}' """
             executionALL(HAPIErrorStmt, conn)
             print(f"Sent error message to a TestResults entry with the row number {Record_id}")
             continue
@@ -150,6 +168,7 @@ def DataChecker(prodKeys, conn):
             parameter = paramNames[0]
             # have data check occur in increasingly larger start->stop intervals until data is returned
             for k, v in intervals.items():
+                tempTooLong = False
                 # while data is not found and the data link is not broken
                 if (not return_dict["dataFound"]) and (not return_dict["broken"]):
                     # assign interval to stop time
@@ -165,36 +184,52 @@ def DataChecker(prodKeys, conn):
                     p.join(10)
                     # if still running after 10 seconds -> end it
                     if p.is_alive():
-                        print(f"Data retrieval took more than 10 seconds for dataset." +
-                              " Skipping this dataset and trying the next.")
+                        # if not last interval
+                        if k != "1mon":
+                            print("Data retrieval took more than 10 seconds for interval." +
+                                  " Trying the next.")
+                        else:
+                            print("Data retrieval took more than 10 seconds for interval.")
                         p.terminate()
-                        #return_dict["attempts"] += 1
-                        # add to list holding datasets that take too long
-                        lines.append(dataset)
+                        return_dict["attempts"] += 1
                         tooLong = True
-                        break
-                    if return_dict["dataFound"]:
-                        print("Data was successfully accessed")
+                        tempTooLong = True
+                    elif return_dict["dataFound"]:
+                        # if data was returned but some earlier intervals timed out
+                        if tooLong:
+                            # update dataAccess value for that record in TestResults
+                            HAPIStmt = f""" UPDATE TestResults
+                                                SET dataAccess = 'Passed after some timed out'
+                                                WHERE SPASE_id = '{SPASE_ID}' """
+                            executionALL(HAPIStmt, conn)
+                            print("Data was successfully accessed after some intervals timed out")
+                            print(f"Sent success message to a TestResults entry with the row number {Record_id}")
+                        else:
+                            # update dataAccess value for that record in TestResults
+                            HAPIStmt = f""" UPDATE TestResults
+                                                SET dataAccess = 'Passed'
+                                                WHERE SPASE_id = '{SPASE_ID}' """
+                            executionALL(HAPIStmt, conn)
+                            print("Data was successfully accessed")
+            # if no data is returned but some intervals timed out
+            if (not return_dict["dataFound"]) and tooLong:
+                # update dataAccess value for that record in TestResults
+                HAPIStmt = f""" UPDATE TestResults
+                                    SET dataAccess = 'Failed but some timed out'
+                                    WHERE SPASE_id = '{SPASE_ID}' """
+                executionALL(HAPIStmt, conn)
+                print("No data was found but some intervals timed out")
+                print(f"Sent failure message to a TestResults entry with the row number {Record_id}")
+                # add to list holding datasets that take too long
+                lines.append(dataset)
             # if all intervals fail or link is broken -> no data
-            if (not return_dict["dataFound"]) and (not tooLong):
-                # inputs error message into TestResults table
+            elif (not return_dict["dataFound"]) and (not tooLong):
                 print("No data was found")
-                errMessage = "HAPI info check passed after 1 attempt. HAPI data check"
-                errMessage += f" failed after {return_dict['attempts']} attempt(s)."
-                # get SPASE_id that matches the dataset
-                prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
-                                    WHERE prodKey LIKE '{dataset}%' """
-                SPASE_ID = execution(prodKeyStmt, conn)
-                SPASE_ID = SPASE_ID[0]
-                # update Errors value for that record in TestResults
+                # inputs error message into TestResults table
+                errMessage = f"HAPI data check failed after {return_dict['attempts']} attempt(s)."
                 HAPIErrorStmt = f""" UPDATE TestResults
                                         SET Errors = '{errMessage}'
                                         WHERE SPASE_id = '{SPASE_ID}' """
                 executionALL(HAPIErrorStmt, conn)
-                # get row number of record updated for visual confirmation later
-                Record_id = execution(f""" SELECT rowNum 
-                                        FROM (SELECT TestResults.rowNum, SPASE_id, prodKey FROM TestResults 
-                                            INNER JOIN MetadataEntries USING (SPASE_id))
-                                        WHERE prodKey LIKE '{dataset}%';""", conn)
                 print(f"Sent error message to a TestResults entry with the row number {Record_id}")
     return lines
