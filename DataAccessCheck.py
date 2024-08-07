@@ -74,15 +74,6 @@ def DataChecker(prodKeys, conn):
         # initialize HAPI server
         server = 'https://cdaweb.gsfc.nasa.gov/hapi'
         
-        # get SPASE_id that matches the dataset
-        if multiKeys:
-            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
-                                WHERE prodKey LIKE '{dataset},%' """
-        else:
-            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
-                                WHERE prodKey = '{dataset}' """
-        SPASE_ID = execution(prodKeyStmt, conn)
-        SPASE_ID = SPASE_ID[0]
         # get row number of record updated for visual confirmation later
         if multiKeys:
             Record_id = execution(f""" SELECT rowNum 
@@ -94,9 +85,31 @@ def DataChecker(prodKeys, conn):
                                 FROM (SELECT TestResults.rowNum, SPASE_id, prodKey, url FROM TestResults 
                                     INNER JOIN MetadataEntries USING (SPASE_id))
                                 WHERE prodKey = '{dataset}' AND url LIKE '%/hapi';""", conn)
+        
+        # get SPASE_id that matches the dataset
+        if multiKeys:
+            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
+                                WHERE prodKey LIKE '{dataset},%' """
+        else:
+            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
+                                WHERE prodKey = '{dataset}' """
+        SPASE_ID = execution(prodKeyStmt, conn)
+        try:
+            SPASE_ID = SPASE_ID[0]
+        # means that this dataset was not the only one for its record
+        except IndexError:
+            print("IndexError occured at this dataset.")
+            prodKeyStmt = f""" SELECT SPASE_id FROM MetadataEntries
+                                WHERE prodKey LIKE '{dataset}%' """
+            SPASE_ID = execution(prodKeyStmt, conn)
+            SPASE_ID = SPASE_ID[0]
+            Record_id = execution(f""" SELECT rowNum 
+                                    FROM (SELECT TestResults.rowNum, SPASE_id, prodKey, url FROM TestResults 
+                                        INNER JOIN MetadataEntries USING (SPASE_id))
+                                    WHERE prodKey LIKE '{dataset}_,%' AND url LIKE '%/hapi';""", conn)
 
         # retrieve all parameters and the start date from the server
-        #sleep(5.0)
+        sleep(5.0)
         try:
             meta = hapi(server,dataset)
         # catches errors like 'unknown dataset id'
@@ -224,7 +237,7 @@ def DataChecker(prodKeys, conn):
                 lines.append(dataset)
             # if all intervals fail or link is broken -> no data
             elif (not return_dict["dataFound"]) and (not tooLong):
-                print("No data was found")
+                print("No data was found.")
                 # inputs error message into TestResults table
                 errMessage = f"HAPI data check failed after {return_dict['attempts']} attempt(s)."
                 HAPIErrorStmt = f""" UPDATE TestResults
