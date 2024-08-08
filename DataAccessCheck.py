@@ -9,6 +9,29 @@ import multiprocessing
 
 # check and see if data can be retrieved from HAPI server
 def HAPIChecker(server, dataset, start, stop, parameters, return_dict):
+    """
+    Calls the hapi function from hapi-client to see if data can be
+    downloaded from a dataset according to the specifics given by the
+    other parameters. Returns a dictionary which holds values signifying
+    if the dataset successfully retrieved data, if the dataset is broken,
+    and a number which keeps track of how many times this you have requested
+    data for this dataset.
+
+    :param server: The server argument to hapi function
+    :type server: String
+    :param dataset: The dataset argument to hapi function
+    :type dataset: String
+    :param start: The start argument to hapi function
+    :type start: datetime object
+    :param stop: The stop argument to hapi function
+    :type stop: datetime object
+    :param parameters: The parameters argument to hapi function
+    :type parameters: String
+    :param return_dict: The dictionary to be returned
+    :type return_dict: dictionary
+    :return: a dictionary holding data retrieval results and information
+    :return type: dictionary
+    """
     # control loops
     dataFound = False
     broken = False
@@ -38,6 +61,29 @@ def HAPIChecker(server, dataset, start, stop, parameters, return_dict):
 
 # checks all HAPI links in db to see if they provide data
 def DataChecker(prodKeys, conn):
+    """
+    Calls the hapi function from hapi-client to see if data can be
+    downloaded from a dataset according to the specifics given by the
+    other parameters. Returns a dictionary which holds values signifying
+    if the dataset successfully retrieved data, if the dataset is broken,
+    and a number which keeps track of how many times this you have requested
+    data for this dataset.
+
+    :param server: The server argument to hapi function
+    :type server: String
+    :param dataset: The dataset argument to hapi function
+    :type dataset: String
+    :param start: The start argument to hapi function
+    :type start: datetime object
+    :param stop: The stop argument to hapi function
+    :type stop: datetime object
+    :param parameters: The parameters argument to hapi function
+    :type parameters: String
+    :param return_dict: The dictionary to be returned
+    :type return_dict: dictionary
+    :return: a dictionary holding data retrieval results and information
+    :return type: dictionary
+    """
     print("The datasets are " + str(prodKeys))
     lines = []
     multiKeys = False
@@ -112,17 +158,21 @@ def DataChecker(prodKeys, conn):
         sleep(5.0)
         try:
             meta = hapi(server,dataset)
-        # catches errors like 'unknown dataset id'
+        # catches errors like 'unknown dataset id' and one that arises when server is overwhelmed
         except HAPIError as e:
             print("Caught HAPIError for dataset " + dataset)
             print(" ", e)
             # record error message saying the dataset failed at info check stage
             errMessage = "HAPI info check failed"
-            # update Errors value for that record in TestResults
+            # update Errors and dataAccess value for that record in TestResults
             HAPIErrorStmt = f""" UPDATE TestResults
                                     SET Errors = '{errMessage}'
                                     WHERE SPASE_id = '{SPASE_ID}' """
             executionALL(HAPIErrorStmt, conn)
+            HAPIStmt = f""" UPDATE TestResults
+                                    SET dataAccess = 'Failed'
+                                    WHERE SPASE_id = '{SPASE_ID}' """
+            executionALL(HAPIStmt, conn)
             print(f"Sent error message to a TestResults entry with the row number {Record_id}")
             continue
         else:
@@ -210,9 +260,15 @@ def DataChecker(prodKeys, conn):
                     elif return_dict["dataFound"]:
                         # if data was returned but some earlier intervals timed out
                         if tooLong:
-                            # update dataAccess value for that record in TestResults
+                            amtTimedOut = (9 - return_dict['attempts'])
+                            errMessage = f"Passed data check after {amtTimedOut} intervals timed out."
+                            # update Errors and dataAccess value for that record in TestResults
+                            HAPIErrorStmt = f""" UPDATE TestResults
+                                                    SET Errors = '{errMessage}'
+                                                    WHERE SPASE_id = '{SPASE_ID}' """
+                            executionALL(HAPIErrorStmt, conn)
                             HAPIStmt = f""" UPDATE TestResults
-                                                SET dataAccess = 'Passed after some timed out'
+                                                SET dataAccess = 'Passed'
                                                 WHERE SPASE_id = '{SPASE_ID}' """
                             executionALL(HAPIStmt, conn)
                             print("Data was successfully accessed after some intervals timed out")
@@ -226,11 +282,17 @@ def DataChecker(prodKeys, conn):
                             print("Data was successfully accessed")
             # if no data is returned but some intervals timed out
             if (not return_dict["dataFound"]) and tooLong:
-                # update dataAccess value for that record in TestResults
+                # update dataAccess and Errors value for that record in TestResults
                 HAPIStmt = f""" UPDATE TestResults
-                                    SET dataAccess = 'Failed but some timed out'
+                                    SET dataAccess = 'Failed'
                                     WHERE SPASE_id = '{SPASE_ID}' """
                 executionALL(HAPIStmt, conn)
+                errMessage = f"Failed data check but some intervals timed out."
+                # update Errors and dataAccess value for that record in TestResults
+                HAPIErrorStmt = f""" UPDATE TestResults
+                                        SET Errors = '{errMessage}'
+                                        WHERE SPASE_id = '{SPASE_ID}' """
+                executionALL(HAPIErrorStmt, conn)
                 print("No data was found but some intervals timed out")
                 print(f"Sent failure message to a TestResults entry with the row number {Record_id}")
                 # add to list holding datasets that take too long
@@ -238,11 +300,15 @@ def DataChecker(prodKeys, conn):
             # if all intervals fail or link is broken -> no data
             elif (not return_dict["dataFound"]) and (not tooLong):
                 print("No data was found.")
-                # inputs error message into TestResults table
+                # update Errors and dataAccess value for that record in TestResults
                 errMessage = f"HAPI data check failed after {return_dict['attempts']} attempt(s)."
                 HAPIErrorStmt = f""" UPDATE TestResults
                                         SET Errors = '{errMessage}'
                                         WHERE SPASE_id = '{SPASE_ID}' """
                 executionALL(HAPIErrorStmt, conn)
+                HAPIStmt = f""" UPDATE TestResults
+                                    SET dataAccess = 'Failed'
+                                    WHERE SPASE_id = '{SPASE_ID}' """
+                executionALL(HAPIStmt, conn)
                 print(f"Sent error message to a TestResults entry with the row number {Record_id}")
     return lines
