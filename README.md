@@ -1,4 +1,5 @@
-# Building Tools to Analyze FAIR for HDRL Datasets
+# Building Tools to Analyze FAIR for HDRL Datasets - [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13287869.svg)](https://doi.org/10.5281/zenodo.13287869)
+
 > This project aims to aid in analyzing the FAIR guidelines (Findable, Accessible, Interoperable, and Reusable) for the NASA SPASE records in the NumericalData and DisplayData categories.
 
 This project consists of a host of scripts and Jupyter notebooks which perform the following:
@@ -7,6 +8,8 @@ This project consists of a host of scripts and Jupyter notebooks which perform t
 - conducts analysis tests using queries on database
 - determines a "FAIR score" of all records
 - reports these findings in the form of created charts
+
+Also included is a script and notebook showing how to check the data availability of the HAPI data access links found in the NASA SPASE records.
 
 *Note that this project was tested in Summer 2024 on SPASE version 2.6.1*
 
@@ -28,6 +31,8 @@ pip install -e ./HDRL-Internship-2024
 Follow the notebook "HowToUse" which walks you through step-by-step how to do the actions listed above. 
 
 For more information on adding additional fields to scrape and add to the database for analysis, refer to the "HowToAdd" notebook.
+
+Follow the notebook "DataAccessTest" if you would like a tutorial for how to test for data accessibility.
 
 ## Contribution
 Contributors and collaborators are welcome. Acceptable contributions can be documentation, code, suggesting ideas, and submitting issues and bugs.
