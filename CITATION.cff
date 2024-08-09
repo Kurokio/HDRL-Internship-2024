@@ -12,6 +12,7 @@ authors:
     orcid: "https://orcid.org/0000-0003-1623-9035"
 title: "HDRL-Internship-2024"
 version: 0.1.0
+doi: 10.5281/zenodo.13287869
 date-released: 2024-08-05
 license: Apache-2.0
 repository-code: "https://github.com/Kurokio/HDRL-Internship-2024/tree/main"
