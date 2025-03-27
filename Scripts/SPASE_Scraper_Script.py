@@ -217,6 +217,7 @@ def SPASE_Scraper(path):
     AccessRights["Open"] = {}
     AccessRights["PartRest"] = {}
     AccessRights["Rest"] = {}
+    AccessRights["None"] = {}
 
     # iterate thru children to locate Access Information
     for child in root[1]:
@@ -241,10 +242,12 @@ def SPASE_Scraper(path):
                             # provide "NULL" value in case no keys are found
                             if access == "Open":
                                 AccessRights["Open"][url] = []
-                            elif access == "PartRest":
+                            elif access == "PartiallyRestricted":
                                 AccessRights["PartRest"][url] = []
-                            else:
+                            elif access == "Restricted":
                                 AccessRights["Rest"][url] = []
+                            else:
+                                AccessRights["None"][url] = []
                         # check if URL has a product key
                         elif child.tag.endswith("ProductKey"):
                             prodKey = child.text
@@ -255,16 +258,21 @@ def SPASE_Scraper(path):
                                 # if multiple prodKeys exist
                                 else:
                                     AccessRights["Open"][url] += [prodKey]
-                            elif access == "PartRest":
+                            elif access == "PartiallyRestricted":
                                 if (AccessRights["PartRest"][url] == []):
                                     AccessRights["PartRest"][url] = [prodKey]
                                 else:
                                     AccessRights["PartRest"][url] += [prodKey]
-                            else:
+                            elif access == "Restricted":
                                 if AccessRights["Rest"][url] == []:
                                     AccessRights["Rest"][url] = [prodKey]
                                 else:
                                     AccessRights["Rest"][url] += [prodKey]
+                            else:
+                                if AccessRights["None"][url] == []:
+                                    AccessRights["None"][url] = [prodKey]
+                                else:
+                                    AccessRights["None"][url] += [prodKey]
                 # find backup Publisher if needed
                 elif pub == "":
                     if child.tag.endswith("RepositoryID"):
